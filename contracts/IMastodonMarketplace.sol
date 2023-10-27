@@ -34,9 +34,9 @@ interface IMastodonMarketplace {
 
     function list(InputOrder memory order) external;
 
-    function delist() external;
+    function delist(uint256) external;
 
-    function buy() external;
+    function buy(uint256) external payable;
 
     //Optional
 
