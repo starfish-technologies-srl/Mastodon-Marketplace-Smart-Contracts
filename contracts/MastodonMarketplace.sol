@@ -17,6 +17,12 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
     IERC20 immutable dxn;
 
+    uint8 constant DEV_FEE_BPS = 250; //BPS, 2.5%, 10% = 1000
+    
+    uint8 constant BURN_FEE_BPS = 150;
+
+    uint16 constant MAX_BPS = 10000;
+
     constructor(IERC20 _xen, IERC20 _dxn){
         xen = _xen;
         dxn = _dxn;
@@ -42,22 +48,35 @@ contract MastodonMarketplace is IMastodonMarketplace {
         IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
 
         delete(orders[listIndex]);
-        emit Delist();
+        emit Delist(globalIndex, orders[globalIndex]);
     }
 
     function buy(uint256 listIndex, PayoutToken token) external payable{
+        uint256 toSeller = orders[listIndex].price * 9600 / MAX_BPS;
+        uint256 toDev = orders[listIndex].price * DEV_FEE_BPS / MAX_BPS;
+        uint256 toBurn = orders[listIndex].price * BURN_FEE_BPS / MAX_BPS;
+
         if(token == PayoutToken.NativeToken){
             require(msg.value == orders[listIndex].price, "invalid price");
-            (bool success, ) = orders[listIndex].seller.call{value: orders[listIndex].price}("");
+
+            //TODO: buy and burn from Uniswap
+
+            (bool success, ) = orders[listIndex].seller.call{value: toSeller}("");
             require(success, "Payment failed.");
         }else if(token == PayoutToken.Xen){
-            xen.transfer(orders[listIndex].seller, orders[listIndex].price);
-        }else dxn.transfer(orders[listIndex].seller, orders[listIndex].price);
+            xen.transfer(orders[listIndex].seller, toSeller);
+            //transfer to dev
+            //direct burn
+        }else {
+            dxn.transfer(orders[listIndex].seller, toSeller);
+            //transfer to dev
+            //direct burn
+        }
 
         IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
 
         delete(orders[listIndex]);
-        emit Buy();
+        emit Buy(globalIndex, orders[globalIndex]);
     }
 
 }

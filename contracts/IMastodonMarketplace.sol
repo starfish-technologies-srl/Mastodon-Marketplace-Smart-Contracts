@@ -28,9 +28,9 @@ interface IMastodonMarketplace {
 
     event List(uint256, Order);
 
-    event Delist();
+    event Delist(uint256, Order);
 
-    event Buy();
+    event Buy(uint256, Order);
 
     function list(InputOrder memory order) external;
 
