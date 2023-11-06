@@ -7,27 +7,6 @@ import {IMastodonMarketplace} from './IMastodonMarketplace.sol';
 import {IERC20} from '@openzeppelin/contracts/interfaces/IERC20.sol';
 import {IERC721} from '@openzeppelin/contracts/interfaces/IERC721.sol';
 
-    enum PayoutToken{
-        NativeToken,
-        XenToken,
-        DxnToken
-    }
-
-    struct Order {
-        IERC721 nftContract;
-        address seller;
-        uint256 tokenId;
-        PayoutToken payoutToken;
-        uint256 price;
-    }
-
-    struct InputOrder{
-        IERC721 nftContract;
-        uint256 tokenId;
-        PayoutToken payoutToken;
-        uint256 price;
-    }
-
 contract MastodonMarketplace is IMastodonMarketplace {
 
     uint256 globalIndex;
@@ -64,20 +43,21 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
         delete(orders[listIndex]);
         emit Delist();
-        //delete order
-        //emit event
     }
 
-    function buy(uint256 listIndex) external payable{
-        //check how it pays
-        //do the transfers
+    function buy(uint256 listIndex, PayoutToken token) external payable{
+        if(token == PayoutToken.NativeToken){
+            require(msg.value == orders[listIndex].price, "invalid price");
+            (bool success, ) = orders[listIndex].seller.call{value: orders[listIndex].price}("");
+            require(success, "Payment failed.");
+        }else if(token == PayoutToken.Xen){
+            xen.transfer(orders[listIndex].seller, orders[listIndex].price);
+        }else dxn.transfer(orders[listIndex].seller, orders[listIndex].price);
+
+        IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
 
         delete(orders[listIndex]);
         emit Buy();
     }
-    
-
-
-
 
 }

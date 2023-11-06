@@ -36,7 +36,7 @@ interface IMastodonMarketplace {
 
     function delist(uint256) external;
 
-    function buy(uint256) external payable;
+    function buy(uint256, PayoutToken) external payable;
 
     //Optional
 
