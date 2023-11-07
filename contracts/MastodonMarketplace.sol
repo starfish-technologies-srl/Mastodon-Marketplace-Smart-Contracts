@@ -23,9 +23,12 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
     uint16 constant MAX_BPS = 10000;
 
+    address dev;
+
     constructor(IERC20 _xen, IERC20 _dxn){
         xen = _xen;
         dxn = _dxn;
+        dev = msg.sender;
     }
 
     function list(InputOrder memory inputOrder) external{
@@ -63,14 +66,23 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
             (bool success, ) = orders[listIndex].seller.call{value: toSeller}("");
             require(success, "Payment failed.");
+
+            (success, ) = orders[listIndex].seller.call{value: toDev}("");
+            require(success, "Payment failed.");
         }else if(token == PayoutToken.Xen){
             xen.transfer(orders[listIndex].seller, toSeller);
             //transfer to dev
-            //direct burn
+            xen.transfer(orders[listIndex].seller, toDev);
+            //direct burn //TODO watch over delegation of msg_sender
+            // IBurnableToken(xen).burn(msg.sender , batchNumber * XEN_BATCH_AMOUNT);
+            (bool success, ) = address(xen).call(abi.encodeWithSignature("burn(uint256)", msg.sender, toBurn));
+            require(success, "Payment failed.");
         }else {
             dxn.transfer(orders[listIndex].seller, toSeller);
             //transfer to dev
+            dxn.transfer(orders[listIndex].seller, toDev);
             //direct burn
+            dxn.transfer(0x0000000000000000000000000000000000000000, toBurn);
         }
 
         IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
