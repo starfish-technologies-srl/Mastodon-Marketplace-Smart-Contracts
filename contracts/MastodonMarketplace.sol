@@ -4,8 +4,12 @@ pragma solidity ^0.8.21;
 import "hardhat/console.sol";
 
 import {IMastodonMarketplace} from './IMastodonMarketplace.sol';
+import {IDxnBuyAndBurn} from './IDxnBuyBurn.sol';
 import {IERC20} from '@openzeppelin/contracts/interfaces/IERC20.sol';
 import {IERC721} from '@openzeppelin/contracts/interfaces/IERC721.sol';
+import {IERC1155} from '@openzeppelin/contracts/interfaces/IERC1155.sol';
+
+import {ERC165Checker} from '@openzeppelin/contracts/utils/introspection/ERC165Checker.sol';
 
 contract MastodonMarketplace is IMastodonMarketplace {
 
@@ -17,38 +21,71 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
     IERC20 immutable dxn;
 
-    uint8 constant DEV_FEE_BPS = 250; //BPS, 2.5%, 10% = 1000
+    IDxnBuyAndBurn dxnBuyBurn;
+
+    uint8 constant DEV_FEE_BPS = 150; //BPS, 2.5%, 10% = 1000
     
-    uint8 constant BURN_FEE_BPS = 150;
+    uint8 constant BURN_FEE_BPS = 250;
 
     uint16 constant MAX_BPS = 10000;
 
     address dev;
 
-    constructor(IERC20 _xen, IERC20 _dxn){
+    constructor(IERC20 _xen, IERC20 _dxn, IDxnBuyAndBurn _dxnBuyBurn){
         xen = _xen;
         dxn = _dxn;
+        dxnBuyBurn = _dxnBuyBurn;
         dev = msg.sender;
     }
 
-    function list(InputOrder memory inputOrder) external{
+    function listERC721(InputOrderERC721 calldata inputOrder) external{
+        require(ERC165Checker.supportsInterface(inputOrder.nftContract, type(IERC721).interfaceId), "not supported");
+
         globalIndex++;
 
-        orders[globalIndex].nftContract = inputOrder.nftContract;
-        orders[globalIndex].tokenId = inputOrder.tokenId;
-        orders[globalIndex].payoutToken = inputOrder.payoutToken;
-        orders[globalIndex].price = inputOrder.price;
-        orders[globalIndex].seller = msg.sender;
+        Order storage newOrder = orders[globalIndex];
+        newOrder.nftContract = inputOrder.nftContract;
+        newOrder.tokenId = inputOrder.tokenId;
+        newOrder.payoutToken = inputOrder.payoutToken;
+        newOrder.price = inputOrder.price;
+        newOrder.seller = msg.sender;
 
         IERC721(inputOrder.nftContract).safeTransferFrom(msg.sender, address(this), inputOrder.tokenId);
 
         emit List(globalIndex, orders[globalIndex]);
     }
 
-    function delist(uint256 listIndex) external{
+    function listERC1155(InputOrderERC1155 calldata inputOrder) external{
+        require(ERC165Checker.supportsInterface(inputOrder.nftContract, type(IERC1155).interfaceId), "not supported");
+        globalIndex++;
+
+        Order storage newOrder = orders[globalIndex];
+
+        newOrder.nftContract = inputOrder.nftContract;
+        newOrder.tokenId = inputOrder.tokenId;
+        newOrder.supply = inputOrder.supply;
+        newOrder.payoutToken = inputOrder.payoutToken;
+        newOrder.price = inputOrder.price;
+        newOrder.seller = msg.sender;
+
+        IERC1155(inputOrder.nftContract).safeTransferFrom(msg.sender, address(this), inputOrder.tokenId, inputOrder.supply, "0x0");
+
+        emit List(globalIndex, orders[globalIndex]);
+    }
+
+    function delistERC721(uint256 listIndex) external{
         require(orders[listIndex].seller == msg.sender, "not owner");
 
         IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
+
+        delete(orders[listIndex]);
+        emit Delist(globalIndex, orders[globalIndex]);
+    }
+
+    function delistERC1155(uint256 listIndex) external{
+        require(orders[listIndex].seller == msg.sender, "not owner");
+
+        IERC1155(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId, orders[listIndex].supply, "0x0");
 
         delete(orders[listIndex]);
         emit Delist(globalIndex, orders[globalIndex]);
@@ -74,6 +111,7 @@ contract MastodonMarketplace is IMastodonMarketplace {
             //transfer to dev
             xen.transfer(orders[listIndex].seller, toDev);
             //direct burn //TODO watch over delegation of msg_sender
+            //buy and burn dxn
             // IBurnableToken(xen).burn(msg.sender , batchNumber * XEN_BATCH_AMOUNT);
             (bool success, ) = address(xen).call(abi.encodeWithSignature("burn(uint256)", msg.sender, toBurn));
             require(success, "Payment failed.");

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.21;
 
 import {IERC721} from '@openzeppelin/contracts/interfaces/IERC721.sol';
+import {IERC1155} from '@openzeppelin/contracts/interfaces/IERC1155.sol';
 
 interface IMastodonMarketplace {
 
@@ -12,16 +13,25 @@ interface IMastodonMarketplace {
     }
 
     struct Order {
-        IERC721 nftContract;
+        address nftContract;
         address seller;
+        uint256 tokenId;
+        uint256 supply;
+        address payoutToken;
+        uint256 price;
+    }
+
+    struct InputOrderERC721{
+        address nftContract;
         uint256 tokenId;
         address payoutToken;
         uint256 price;
     }
 
-    struct InputOrder{
-        IERC721 nftContract;
+    struct InputOrderERC1155{
+        address nftContract;
         uint256 tokenId;
+        uint256 supply;
         address payoutToken;
         uint256 price;
     }
@@ -32,9 +42,13 @@ interface IMastodonMarketplace {
 
     event Buy(uint256, Order);
 
-    function list(InputOrder memory order) external;
+    function listERC721(InputOrderERC721 memory order) external;
 
-    function delist(uint256) external;
+    function listERC1155(InputOrderERC1155 memory order) external;
+
+    function delistERC721(uint256) external;
+
+    function delistERC1155(uint256) external;
 
     function buy(uint256, PayoutToken) external payable;
 
