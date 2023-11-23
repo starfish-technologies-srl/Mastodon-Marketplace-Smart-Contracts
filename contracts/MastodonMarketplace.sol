@@ -30,7 +30,7 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
     address dev;
 
-    constructor(IERC20 _xen, IERC20 _dxn, IDxnBuyAndBurn _dxnBuyBurn){
+    constructor(IERC20 _xen, IERC20 _dxn, address _dxnBuyBurn){
         xen = _xen;
         dxn = _dxn;
         dxnBuyBurn = _dxnBuyBurn;
@@ -118,7 +118,7 @@ contract MastodonMarketplace is IMastodonMarketplace {
             dxn.transfer(orders[listIndex].seller, toSeller);
 
             dxn.transfer(orders[listIndex].seller, toDev);
-            
+
             dxn.transfer(0x0000000000000000000000000000000000000000, toBurn);
         }
 
