@@ -4,7 +4,6 @@ pragma solidity ^0.8.21;
 import "hardhat/console.sol";
 
 import {IMastodonMarketplace} from './IMastodonMarketplace.sol';
-import {IDxnBuyAndBurn} from './IDxnBuyBurn.sol';
 import {IERC20} from '@openzeppelin/contracts/interfaces/IERC20.sol';
 import {IERC721} from '@openzeppelin/contracts/interfaces/IERC721.sol';
 import {IERC1155} from '@openzeppelin/contracts/interfaces/IERC1155.sol';
@@ -21,7 +20,7 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
     IERC20 immutable dxn;
 
-    IDxnBuyAndBurn dxnBuyBurn;
+    address dxnBuyBurn;
 
     uint8 constant DEV_FEE_BPS = 150; //BPS, 2.5%, 10% = 1000
     
@@ -99,27 +98,27 @@ contract MastodonMarketplace is IMastodonMarketplace {
         if(token == PayoutToken.NativeToken){
             require(msg.value == orders[listIndex].price, "invalid price");
 
-            //TODO: buy and burn from Uniswap
-
             (bool success, ) = orders[listIndex].seller.call{value: toSeller}("");
+            require(success, "Payment failed.");
+
+            (success, ) = dxnBuyBurn.call{value: toBurn}("");
             require(success, "Payment failed.");
 
             (success, ) = orders[listIndex].seller.call{value: toDev}("");
             require(success, "Payment failed.");
+
         }else if(token == PayoutToken.Xen){
             xen.transfer(orders[listIndex].seller, toSeller);
-            //transfer to dev
+
             xen.transfer(orders[listIndex].seller, toDev);
-            //direct burn //TODO watch over delegation of msg_sender
-            //buy and burn dxn
-            // IBurnableToken(xen).burn(msg.sender , batchNumber * XEN_BATCH_AMOUNT);
-            (bool success, ) = address(xen).call(abi.encodeWithSignature("burn(uint256)", msg.sender, toBurn));
-            require(success, "Payment failed.");
+
+            xen.transfer(dxnBuyBurn, toBurn);
+
         }else {
             dxn.transfer(orders[listIndex].seller, toSeller);
-            //transfer to dev
+
             dxn.transfer(orders[listIndex].seller, toDev);
-            //direct burn
+            
             dxn.transfer(0x0000000000000000000000000000000000000000, toBurn);
         }
 
