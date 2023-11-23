@@ -36,6 +36,14 @@ interface IMastodonMarketplace {
         uint256 price;
     }
 
+    struct InputOrder{
+        address nftContract;
+        uint256 tokenId;
+        uint256 supply;
+        address payoutToken;
+        uint256 price;
+    }
+
     event List(uint256, Order);
 
     event Delist(uint256, Order);
@@ -50,15 +58,15 @@ interface IMastodonMarketplace {
 
     function delistERC1155(uint256) external;
 
-    function buy(uint256, PayoutToken) external payable;
+    // function _buy(uint256, PayoutToken) external payable;
 
     //Optional
 
-    // function batchList() external;
+    function batchList(InputOrder[] calldata inputOrders) external;
 
-    // function batchDelist() external;
+    function batchDelist(uint256[] calldata listIndexes) external;
 
-    // function batchBuy() external;
+    function batchBuy(uint256[] calldata listIndexes, PayoutToken[] calldata payoutTokens) external payable;
 
     // function changePrice() external;
 

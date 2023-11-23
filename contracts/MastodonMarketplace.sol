@@ -16,25 +16,61 @@ contract MastodonMarketplace is IMastodonMarketplace {
 
     mapping (uint256 listIndex => Order order) orders;
 
-    IERC20 immutable xen;
+    IERC20 public immutable xen;
 
-    IERC20 immutable dxn;
+    IERC20 public immutable dxn;
 
-    address dxnBuyBurn;
+    address public immutable dxnBuyBurn;
 
-    uint8 constant DEV_FEE_BPS = 150; //BPS, 2.5%, 10% = 1000
+    uint8 constant DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
     
     uint8 constant BURN_FEE_BPS = 250;
 
     uint16 constant MAX_BPS = 10000;
 
-    address dev;
+    address public immutable dev;
 
     constructor(IERC20 _xen, IERC20 _dxn, address _dxnBuyBurn){
         xen = _xen;
         dxn = _dxn;
         dxnBuyBurn = _dxnBuyBurn;
         dev = msg.sender;
+    }
+
+    function batchList(InputOrder[] calldata inputOrders) external{
+        for(uint256 i=0; i < inputOrders.length; i++){
+            _list(inputOrders[i]);
+        }
+    }
+
+    function _list(InputOrder calldata inputOrder) public {
+
+        globalIndex++;
+
+        Order storage newOrder = orders[globalIndex];
+
+        if(ERC165Checker.supportsInterface(inputOrder.nftContract, type(IERC721).interfaceId)){
+            newOrder.nftContract = inputOrder.nftContract;
+            newOrder.tokenId = inputOrder.tokenId;
+            newOrder.payoutToken = inputOrder.payoutToken;
+            newOrder.price = inputOrder.price;
+            newOrder.seller = msg.sender;
+
+            IERC721(inputOrder.nftContract).safeTransferFrom(msg.sender, address(this), inputOrder.tokenId);
+
+        } else if (ERC165Checker.supportsInterface(inputOrder.nftContract, type(IERC1155).interfaceId)){
+                newOrder.nftContract = inputOrder.nftContract;
+                newOrder.tokenId = inputOrder.tokenId;
+                newOrder.supply = inputOrder.supply;
+                newOrder.payoutToken = inputOrder.payoutToken;
+                newOrder.price = inputOrder.price;
+                newOrder.seller = msg.sender;
+
+                IERC1155(inputOrder.nftContract).safeTransferFrom(msg.sender, address(this), inputOrder.tokenId, inputOrder.supply, "0x0");
+
+        }else revert("not supported");
+
+        emit List(globalIndex, newOrder);
     }
 
     function listERC721(InputOrderERC721 calldata inputOrder) external{
@@ -72,6 +108,29 @@ contract MastodonMarketplace is IMastodonMarketplace {
         emit List(globalIndex, orders[globalIndex]);
     }
 
+    function batchDelist(uint256[] calldata listIndexes) external {
+        for(uint256 i=0; i < listIndexes.length; i++){
+            _delist(listIndexes[i]);
+        }
+    }
+
+    function _delist(uint256 listIndex) public{
+        require(orders[listIndex].seller == msg.sender, "not owner");
+
+        if(ERC165Checker.supportsInterface(orders[listIndex].nftContract, type(IERC721).interfaceId)){
+
+        IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
+
+        } else if (ERC165Checker.supportsInterface(orders[listIndex].nftContract, type(IERC1155).interfaceId)){
+
+        IERC1155(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId, orders[listIndex].supply, "0x0");
+
+        }else revert("not supported");
+
+        delete(orders[listIndex]);
+        emit Delist(globalIndex, orders[globalIndex]);
+    }
+
     function delistERC721(uint256 listIndex) external{
         require(orders[listIndex].seller == msg.sender, "not owner");
 
@@ -90,7 +149,13 @@ contract MastodonMarketplace is IMastodonMarketplace {
         emit Delist(globalIndex, orders[globalIndex]);
     }
 
-    function buy(uint256 listIndex, PayoutToken token) external payable{
+    function batchBuy(uint256[] calldata listIndexes, PayoutToken[] calldata payoutTokens) external payable{
+        for(uint256 i=0; i < listIndexes.length; i++){
+            _buy(listIndexes[i], payoutTokens[i]);
+        }
+    }
+
+    function _buy(uint256 listIndex, PayoutToken token) public payable{
         uint256 toSeller = orders[listIndex].price * 9600 / MAX_BPS;
         uint256 toDev = orders[listIndex].price * DEV_FEE_BPS / MAX_BPS;
         uint256 toBurn = orders[listIndex].price * BURN_FEE_BPS / MAX_BPS;
@@ -122,7 +187,13 @@ contract MastodonMarketplace is IMastodonMarketplace {
             dxn.transfer(0x0000000000000000000000000000000000000000, toBurn);
         }
 
+        if(orders[listIndex].supply == 0){
         IERC721(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId);
+
+        } else {
+        IERC1155(orders[listIndex].nftContract).safeTransferFrom(address(this), msg.sender, orders[listIndex].tokenId, orders[listIndex].supply, "0x0");
+            
+        }
 
         delete(orders[listIndex]);
         emit Buy(globalIndex, orders[globalIndex]);
