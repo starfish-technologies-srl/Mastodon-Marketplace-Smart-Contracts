@@ -49,43 +49,19 @@ contract MastodonMarketplace is
         }
     }
 
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4) {
-        return (this.onERC721Received.selector);
+    function batchDelist(uint256[] calldata listIndexes) external {
+        for (uint256 i = 0; i < listIndexes.length; i++) {
+            _delist(listIndexes[i]);
+        }
     }
 
-    function onERC1155Received(
-        address operator,
-        address from,
-        uint256 id,
-        uint256 value,
-        bytes calldata data
-    ) external returns (bytes4) {
-        return (this.onERC1155Received.selector);
-    }
-    
-    function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
-    ) external returns (bytes4){
-        return (this.onERC1155Received.selector);
-    }
-
-        /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IERC1155).interfaceId; // ||
-            // interfaceId == type(IERC1155MetadataURI).interfaceId ||
-            // super.supportsInterface(interfaceId);
+    function batchBuy(
+        uint256[] calldata listIndexes,
+        PayoutToken[] calldata payoutTokens
+    ) external payable {
+        for (uint256 i = 0; i < listIndexes.length; i++) {
+            _buy(listIndexes[i], payoutTokens[i]);
+        }
     }
 
     function _list(InputOrder memory inputOrder) public {
@@ -135,69 +111,6 @@ contract MastodonMarketplace is
         emit List(globalIndex, newOrder);
     }
 
-    function listERC721(InputOrderERC721 calldata inputOrder) external {
-        require(
-            ERC165Checker.supportsInterface(
-                inputOrder.nftContract,
-                type(IERC721).interfaceId
-            ),
-            "not supported"
-        );
-
-        globalIndex++;
-
-        Order storage newOrder = orders[globalIndex];
-        newOrder.nftContract = inputOrder.nftContract;
-        newOrder.tokenId = inputOrder.tokenId;
-        newOrder.payoutToken = inputOrder.payoutToken;
-        newOrder.price = inputOrder.price;
-        newOrder.seller = msg.sender;
-
-        IERC721(inputOrder.nftContract).safeTransferFrom(
-            msg.sender,
-            address(this),
-            inputOrder.tokenId
-        );
-
-        emit List(globalIndex, orders[globalIndex]);
-    }
-
-    function listERC1155(InputOrderERC1155 calldata inputOrder) external {
-        require(
-            ERC165Checker.supportsInterface(
-                inputOrder.nftContract,
-                type(IERC1155).interfaceId
-            ),
-            "not supported"
-        );
-        globalIndex++;
-
-        Order storage newOrder = orders[globalIndex];
-
-        newOrder.nftContract = inputOrder.nftContract;
-        newOrder.tokenId = inputOrder.tokenId;
-        newOrder.supply = inputOrder.supply;
-        newOrder.payoutToken = inputOrder.payoutToken;
-        newOrder.price = inputOrder.price;
-        newOrder.seller = msg.sender;
-
-        IERC1155(inputOrder.nftContract).safeTransferFrom(
-            msg.sender,
-            address(this),
-            inputOrder.tokenId,
-            inputOrder.supply,
-            "0x0"
-        );
-
-        emit List(globalIndex, orders[globalIndex]);
-    }
-
-    function batchDelist(uint256[] calldata listIndexes) external {
-        for (uint256 i = 0; i < listIndexes.length; i++) {
-            _delist(listIndexes[i]);
-        }
-    }
-
     function _delist(uint256 listIndex) public {
         require(orders[listIndex].seller == msg.sender, "not owner");
 
@@ -229,43 +142,6 @@ contract MastodonMarketplace is
 
         delete (orders[listIndex]);
         emit Delist(globalIndex, orders[globalIndex]);
-    }
-
-    function delistERC721(uint256 listIndex) external {
-        require(orders[listIndex].seller == msg.sender, "not owner");
-
-        IERC721(orders[listIndex].nftContract).safeTransferFrom(
-            address(this),
-            msg.sender,
-            orders[listIndex].tokenId
-        );
-
-        delete (orders[listIndex]);
-        emit Delist(globalIndex, orders[globalIndex]);
-    }
-
-    function delistERC1155(uint256 listIndex) external {
-        require(orders[listIndex].seller == msg.sender, "not owner");
-
-        IERC1155(orders[listIndex].nftContract).safeTransferFrom(
-            address(this),
-            msg.sender,
-            orders[listIndex].tokenId,
-            orders[listIndex].supply,
-            "0x0"
-        );
-
-        delete (orders[listIndex]);
-        emit Delist(globalIndex, orders[globalIndex]);
-    }
-
-    function batchBuy(
-        uint256[] calldata listIndexes,
-        PayoutToken[] calldata payoutTokens
-    ) external payable {
-        for (uint256 i = 0; i < listIndexes.length; i++) {
-            _buy(listIndexes[i], payoutTokens[i]);
-        }
     }
 
     function _buy(uint256 listIndex, PayoutToken token) public payable {
@@ -318,5 +194,45 @@ contract MastodonMarketplace is
 
         delete (orders[listIndex]);
         emit Buy(globalIndex, orders[globalIndex]);
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return (this.onERC721Received.selector);
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return (this.onERC1155Received.selector);
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return (this.onERC1155Received.selector);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override returns (bool) {
+        return interfaceId == type(IERC1155).interfaceId; // ||
+        // interfaceId == type(IERC1155MetadataURI).interfaceId ||
+        // super.supportsInterface(interfaceId);
     }
 }

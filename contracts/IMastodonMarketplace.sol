@@ -12,32 +12,17 @@ interface IMastodonMarketplace {
         Dxn
     }
 
+    struct InputOrder{
+        address nftContract;
+        uint256 tokenId;
+        uint256 supply;
+        address payoutToken;
+        uint256 price;
+    }
+
     struct Order {
         address nftContract;
         address seller;
-        uint256 tokenId;
-        uint256 supply;
-        address payoutToken;
-        uint256 price;
-    }
-
-    struct InputOrderERC721{
-        address nftContract;
-        uint256 tokenId;
-        address payoutToken;
-        uint256 price;
-    }
-
-    struct InputOrderERC1155{
-        address nftContract;
-        uint256 tokenId;
-        uint256 supply;
-        address payoutToken;
-        uint256 price;
-    }
-
-    struct InputOrder{
-        address nftContract;
         uint256 tokenId;
         uint256 supply;
         address payoutToken;
@@ -49,18 +34,6 @@ interface IMastodonMarketplace {
     event Delist(uint256, Order);
 
     event Buy(uint256, Order);
-
-    function listERC721(InputOrderERC721 memory order) external;
-
-    function listERC1155(InputOrderERC1155 memory order) external;
-
-    function delistERC721(uint256) external;
-
-    function delistERC1155(uint256) external;
-
-    // function _buy(uint256, PayoutToken) external payable;
-
-    //Optional
 
     function batchList(InputOrder[] calldata inputOrders) external;
 
