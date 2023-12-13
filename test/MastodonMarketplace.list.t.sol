@@ -76,7 +76,7 @@ contract List is Test {
         assertEq(seller, input_seller);
         assertEq(tokenId, input_tokenId);
         assertEq(supply, input_supply);
-        // assertEq(payoutToken, input_payoutToken);//TODO fix
+        assertEq(uint8(payoutToken), uint8(input_payoutToken));
         assertEq(price, input_price);
     }
 
@@ -117,7 +117,7 @@ contract List is Test {
         assertEq(seller, input_seller);
         assertEq(tokenId, input_tokenId);
         assertEq(supply, input_supply);
-        // assertEq(payoutToken, input_payoutToken);
+        assertEq(uint8(payoutToken), uint8(input_payoutToken));
         assertEq(price, input_price);
     }
 
