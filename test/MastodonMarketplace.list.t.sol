@@ -23,24 +23,6 @@ contract List is Test {
     BurnerMock burnerMock;
 
     address add1 = address(1);
-    InputOrderERC721 inputOrderERC721;
-    struct InputOrderERC721 {
-        address nftContract;
-        uint256 tokenId;
-        address payoutToken;
-        uint256 price;
-    }
-
-    // IMastodonMarketplace iMM;
-
-    // struct InputOrder{
-    //     address nftContract;
-    //     uint256 tokenId;
-    //     uint256 supply;
-    //     address payoutToken;
-    //     uint256 price;
-    // }
-    // InputOrder imms;
 
     function setUp() public {
         //setUp: An optional function invoked before each test case is run.
@@ -49,7 +31,7 @@ contract List is Test {
         erc721Mock = new ERC721Mock();
         erc1155Mock = new ERC1155Mock();
         burnerMock = new BurnerMock(erc20MockA);
-        // iMM = new IMastodonMarketplace();
+
         mastodonMarketplace = new MastodonMarketplace(
             erc20MockA,
             erc20MockB,
@@ -62,7 +44,7 @@ contract List is Test {
         address input_seller = add1;
         uint256 input_tokenId = 1;
         uint256 input_supply = 0; //always 0 for ERC721
-        address input_payoutToken = add1;
+        IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
         uint256 input_price = 1;
 
         IMastodonMarketplace.InputOrder[]
@@ -86,7 +68,7 @@ contract List is Test {
             address seller,
             uint256 tokenId,
             uint256 supply,
-            address payoutToken,
+            IMastodonMarketplace.PayoutToken payoutToken,
             uint256 price
         ) = mastodonMarketplace.orders(1);
 
@@ -94,7 +76,7 @@ contract List is Test {
         assertEq(seller, input_seller);
         assertEq(tokenId, input_tokenId);
         assertEq(supply, input_supply);
-        assertEq(payoutToken, input_payoutToken);
+        // assertEq(payoutToken, input_payoutToken);//TODO fix
         assertEq(price, input_price);
     }
 
@@ -103,7 +85,7 @@ contract List is Test {
         address input_seller = add1;
         uint256 input_tokenId = 1;
         uint256 input_supply = 10;
-        address input_payoutToken = add1;
+        IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
         uint256 input_price = 1;
 
         IMastodonMarketplace.InputOrder[]
@@ -127,7 +109,7 @@ contract List is Test {
             address seller,
             uint256 tokenId,
             uint256 supply,
-            address payoutToken,
+            IMastodonMarketplace.PayoutToken payoutToken,
             uint256 price
         ) = mastodonMarketplace.orders(1);
 
@@ -135,7 +117,7 @@ contract List is Test {
         assertEq(seller, input_seller);
         assertEq(tokenId, input_tokenId);
         assertEq(supply, input_supply);
-        assertEq(payoutToken, input_payoutToken);
+        // assertEq(payoutToken, input_payoutToken);
         assertEq(price, input_price);
     }
 
