@@ -16,7 +16,7 @@ interface IMastodonMarketplace {
         address nftContract;
         uint256 tokenId;
         uint256 supply;
-        address payoutToken;
+        PayoutToken payoutToken;
         uint256 price;
     }
 
@@ -25,7 +25,7 @@ interface IMastodonMarketplace {
         address seller;
         uint256 tokenId;
         uint256 supply;
-        address payoutToken;
+        PayoutToken payoutToken;
         uint256 price;
     }
 
@@ -39,7 +39,7 @@ interface IMastodonMarketplace {
 
     function batchDelist(uint256[] calldata listIndexes) external;
 
-    function batchBuy(uint256[] calldata listIndexes, PayoutToken[] calldata payoutTokens) external payable;
+    function batchBuy(uint256[] calldata listIndexes) external payable;
 
     // function changePrice() external;
 

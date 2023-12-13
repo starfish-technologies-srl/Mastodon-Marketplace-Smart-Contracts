@@ -56,11 +56,10 @@ contract MastodonMarketplace is
     }
 
     function batchBuy(
-        uint256[] calldata listIndexes,
-        PayoutToken[] calldata payoutTokens
+        uint256[] calldata listIndexes
     ) external payable {
         for (uint256 i = 0; i < listIndexes.length; i++) {
-            _buy(listIndexes[i], payoutTokens[i]);
+            _buy(listIndexes[i]);
         }
     }
 
@@ -144,25 +143,25 @@ contract MastodonMarketplace is
         emit Delist(globalIndex, orders[globalIndex]);
     }
 
-    function _buy(uint256 listIndex, PayoutToken token) public payable {
+    function _buy(uint256 listIndex) public payable {
         uint256 toSeller = (orders[listIndex].price * 9600) / MAX_BPS;
         uint256 toDev = (orders[listIndex].price * DEV_FEE_BPS) / MAX_BPS;
         uint256 toBurn = (orders[listIndex].price * BURN_FEE_BPS) / MAX_BPS;
 
-        if (token == PayoutToken.NativeToken) {
+        if (orders[listIndex].payoutToken == PayoutToken.NativeToken) {
             require(msg.value == orders[listIndex].price, "invalid price");
 
             (bool success, ) = orders[listIndex].seller.call{value: toSeller}(
                 ""
             );
-            require(success, "Payment failed.");
+            require(success, "1.Payment failed.");
 
             (success, ) = dxnBuyBurn.call{value: toBurn}("");
-            require(success, "Payment failed.");
+            require(success, "2.Payment failed.");
 
             (success, ) = orders[listIndex].seller.call{value: toDev}("");
-            require(success, "Payment failed.");
-        } else if (token == PayoutToken.Xen) {
+            require(success, "3.Payment failed.");
+        } else if (orders[listIndex].payoutToken == PayoutToken.Xen) {
             xen.transfer(orders[listIndex].seller, toSeller);
 
             xen.transfer(orders[listIndex].seller, toDev);
