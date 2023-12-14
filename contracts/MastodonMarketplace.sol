@@ -162,7 +162,7 @@ contract MastodonMarketplace is
             (success, ) = dxnBuyBurn.call{value: toBurn}("");
             require(success, "2.Payment failed.");
 
-            (success, ) = orders[listIndex].seller.call{value: toDev}("");
+            (success, ) = dev.call{value: toDev}("");
             require(success, "3.Payment failed.");
         } else if (orders[listIndex].payoutToken == PayoutToken.Xen) {
             xen.transfer(orders[listIndex].seller, toSeller);
