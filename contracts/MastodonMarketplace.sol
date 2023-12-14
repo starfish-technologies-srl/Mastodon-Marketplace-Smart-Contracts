@@ -44,13 +44,15 @@ contract MastodonMarketplace is
     }
 
     function batchList(InputOrder[] memory inputOrders) external {
-        for (uint256 i = 0; i < inputOrders.length; i++) {
+        uint256 arrayLength = inputOrders.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
             _list(inputOrders[i]);
         }
     }
 
     function batchDelist(uint256[] calldata listIndexes) external {
-        for (uint256 i = 0; i < listIndexes.length; i++) {
+        uint256 arrayLength = listIndexes.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
             _delist(listIndexes[i]);
         }
     }
@@ -58,7 +60,8 @@ contract MastodonMarketplace is
     function batchBuy(
         uint256[] calldata listIndexes
     ) external payable {
-        for (uint256 i = 0; i < listIndexes.length; i++) {
+        uint256 arrayLength = listIndexes.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
             _buy(listIndexes[i]);
         }
     }
