@@ -6,6 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract BurnerMock {
     IERC20 public xen;
 
+    receive() external payable {
+    // This function is executed when a contract receives plain Ether (without data)
+}
+
     // Constructor to set the address of the ERC20 token
     constructor(IERC20 _erc20TokenAddress) {
         xen = _erc20TokenAddress;
