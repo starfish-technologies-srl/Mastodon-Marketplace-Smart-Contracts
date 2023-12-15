@@ -43,7 +43,7 @@ contract MastodonMarketplace is
         dev = msg.sender;
     }
 
-    function batchList(InputOrder[] memory inputOrders) external {
+    function batchList(InputOrder[] calldata inputOrders) external {
         uint256 arrayLength = inputOrders.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _list(inputOrders[i]);
@@ -57,16 +57,14 @@ contract MastodonMarketplace is
         }
     }
 
-    function batchBuy(
-        uint256[] calldata listIndexes
-    ) external payable {
+    function batchBuy(uint256[] calldata listIndexes) external payable {
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _buy(listIndexes[i]);
         }
     }
 
-    function _list(InputOrder memory inputOrder) public {
+    function _list(InputOrder calldata inputOrder) public {
         globalIndex++;
 
         Order storage newOrder = orders[globalIndex];
@@ -232,9 +230,5 @@ contract MastodonMarketplace is
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override returns (bool) {
-        return interfaceId == type(IERC1155).interfaceId; // ||
-        // interfaceId == type(IERC1155MetadataURI).interfaceId ||
-        // super.supportsInterface(interfaceId);
-    }
+    ) public view override returns (bool) {}
 }
