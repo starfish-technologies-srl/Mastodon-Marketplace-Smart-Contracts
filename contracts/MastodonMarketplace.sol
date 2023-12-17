@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import "hardhat/console.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import {IMastodonMarketplace} from "./IMastodonMarketplace.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/interfaces/IERC1155.sol";
-
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-
 import {IERC721Receiver} from "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 
@@ -18,9 +15,15 @@ contract MastodonMarketplace is
     IERC721Receiver,
     IERC1155Receiver
 {
-    uint256 globalIndex;
+    uint256 public globalIndex;
 
-    mapping(uint256 listIndex => Order order) public orders;
+    uint8 private constant DEV_FEE_BPS = 150;
+
+    uint8 private constant BURN_FEE_BPS = 250;
+
+    uint16 private constant MAX_BPS = 10000;
+
+    address public immutable dev;
 
     IERC20 public immutable xen;
 
@@ -28,13 +31,7 @@ contract MastodonMarketplace is
 
     address public immutable dxnBuyBurn;
 
-    uint8 constant DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
-
-    uint8 constant BURN_FEE_BPS = 250;
-
-    uint16 constant MAX_BPS = 10000;
-
-    address public immutable dev;
+    mapping(uint256 listIndex => Order order) public orders;
 
     constructor(IERC20 _xen, IERC20 _dxn, address _dxnBuyBurn) {
         xen = _xen;
@@ -64,7 +61,7 @@ contract MastodonMarketplace is
         }
     }
 
-    function _list(InputOrder calldata inputOrder) public {
+    function _list(InputOrder calldata inputOrder) internal {
         globalIndex++;
 
         Order storage newOrder = orders[globalIndex];
@@ -106,13 +103,13 @@ contract MastodonMarketplace is
                 inputOrder.supply,
                 "0x0"
             );
-        } else revert("not supported");
+        } else revert("Mastodon: not supported");
 
         emit List(globalIndex, newOrder);
     }
 
-    function _delist(uint256 listIndex) public {
-        require(orders[listIndex].seller == msg.sender, "not owner");
+    function _delist(uint256 listIndex) internal {
+        require(orders[listIndex].seller == msg.sender, "Mastodon: not owner");
 
         if (
             ERC165Checker.supportsInterface(
@@ -144,13 +141,13 @@ contract MastodonMarketplace is
         emit Delist(globalIndex, orders[globalIndex]);
     }
 
-    function _buy(uint256 listIndex) public payable {
+    function _buy(uint256 listIndex) internal {
         uint256 toSeller = (orders[listIndex].price * 9600) / MAX_BPS;
         uint256 toDev = (orders[listIndex].price * DEV_FEE_BPS) / MAX_BPS;
         uint256 toBurn = (orders[listIndex].price * BURN_FEE_BPS) / MAX_BPS;
 
         if (orders[listIndex].payoutToken == PayoutToken.NativeToken) {
-            require(msg.value == orders[listIndex].price, "invalid price");
+            require(msg.value == orders[listIndex].price, "Mastodon: invalid price");
 
             (bool success, ) = orders[listIndex].seller.call{value: toSeller}(
                 ""
