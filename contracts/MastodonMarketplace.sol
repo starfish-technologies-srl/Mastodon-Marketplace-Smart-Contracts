@@ -93,6 +93,11 @@ contract MastodonMarketplace is
         }
     }
 
+    /**
+     * @dev Batch changing prices and payout tokens for multiple NFTs from the marketplace.
+     * @param listIndexes An array of list indexes representing the NFTs for which the prices will be changed.
+     * @param newPrices An array of Price structures representing the new prices corresponding to the NFTs.
+     */
     function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external nonReentrant {
         require(listIndexes.length == newPrices.length, "Mastodon: length diff");
 
@@ -102,6 +107,13 @@ contract MastodonMarketplace is
         }
     }
 
+    /**
+     * @notice Updates the price and payout token for a specific NFT listing.
+     * @dev Only the owner of the NFT listing can change its price.
+     * @param listIndex The index of the NFT listing to be updated.
+     * @param newPrice A Price structure representing the new price and payout token for the NFT.
+     * @dev This function is called internally by changePrice and is not meant for direct external use.
+     */
     function _changePrice(uint256 listIndex, Price calldata newPrice) internal {
         require(
             orders[listIndex].seller == msg.sender,
