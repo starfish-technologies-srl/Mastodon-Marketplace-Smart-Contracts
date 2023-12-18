@@ -93,20 +93,25 @@ contract MastodonMarketplace is
         }
     }
 
-    function changePrice(uint256[] calldata listIndexes) external nonReentrant{
+    function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external nonReentrant{
+        require(listIndexes.length == newPrices.length, "Mastodon: length diff");
+
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
-            _changePrice(listIndexes[i]);
+            _changePrice(listIndexes[i], newPrices[i]);
         }
     }
 
-    function _changePrice(uint256 listIndex) internal {
+    function _changePrice(uint256 listIndex, Price calldata newPrice) internal {
         require(
             orders[listIndex].seller == msg.sender,
-            "Mastodon: not owner of order"
+            "Mastodon: not the owner of order"
         );
 
-        // orders[listIndex].price
+        orders[listIndex].payoutToken = newPrice.payoutToken;
+        orders[listIndex].price = newPrice.newPrice;
+
+        emit NewPrice(listIndex, newPrice);
     }
 
     /**
