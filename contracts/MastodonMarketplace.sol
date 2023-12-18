@@ -98,7 +98,7 @@ contract MastodonMarketplace is
      * @param listIndexes An array of list indexes representing the NFTs for which the prices will be changed.
      * @param newPrices An array of Price structures representing the new prices corresponding to the NFTs.
      */
-    function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external nonReentrant {
+    function batchChangePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external nonReentrant {
         require(listIndexes.length == newPrices.length, "Mastodon: length diff");
 
         uint256 arrayLength = listIndexes.length;
