@@ -43,26 +43,33 @@ interface IMastodonMarketplace {
         uint256 price;        // The price at which the NFT is listed for sale.
     }
 
+    struct Price{
+        PayoutToken payoutToken; // The desired token to receive as payment.
+        uint256 newPrice; // The new price for Order
+    }
+
     /**
      * @dev Event emitted when a new NFT is listed on the marketplace.
      * @param orderIndex The index of the order in the marketplace.
      * @param order The details of the listed NFT order.
      */
-    event List(uint256 orderIndex, Order order);
+    event List(uint256 indexed orderIndex, Order order);
 
     /**
      * @dev Event emitted when an existing NFT listing is delisted from the marketplace.
      * @param orderIndex The index of the order in the marketplace.
      * @param order The details of the delisted NFT order.
      */
-    event Delist(uint256 orderIndex, Order order);
+    event Delist(uint256 indexed orderIndex, Order order);
 
     /**
      * @dev Event emitted when a user successfully purchases an NFT from the marketplace.
      * @param orderIndex The index of the order in the marketplace.
      * @param order The details of the purchased NFT order.
      */
-    event Buy(uint256 orderIndex, Order order);
+    event Buy(uint256 indexed orderIndex, Order order);
+
+    event NewPrice(uint256 indexed orderIndex, Price newPrice);
 
     /**
      * @dev Lists multiple NFTs on the marketplace.
