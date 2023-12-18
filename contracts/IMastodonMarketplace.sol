@@ -1,49 +1,50 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import {IERC721} from '@openzeppelin/contracts/interfaces/IERC721.sol';
-import {IERC1155} from '@openzeppelin/contracts/interfaces/IERC1155.sol';
+import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
+import {IERC1155} from "@openzeppelin/contracts/interfaces/IERC1155.sol";
 
 /**
- * @title MastodonMarketplace
  * @dev A decentralized marketplace for buying and selling NFTs (Non-Fungible Tokens) using Ethereum.
  * @notice This contract allows users to list NFTs for sale, buy NFTs from other users, and delist NFTs.
  */
 interface IMastodonMarketplace {
-
     /**
      * @dev Enumeration of possible payout tokens for an NFT sale.
      */
     enum PayoutToken {
-        NativeToken, // Ether 
-        Xen,         // ERC20 token (Xen)
-        Dxn          // ERC20 token (Dxn)
+        NativeToken, // Ether
+        Xen, // ERC20 token (Xen)
+        Dxn // ERC20 token (Dxn)
     }
 
     /**
      * @dev Struct representing the details of an NFT listing.
      */
     struct InputOrder {
-        address nftContract;  // The address of the NFT contract.
-        uint256 tokenId;      // The ID of the NFT or batch of NFTs.
-        uint256 supply;       // The supply of NFTs for ERC1155 tokens, set to 0 for ERC721.
-        PayoutToken payoutToken;  // The desired token to receive as payment.
-        uint256 price;        // The price at which the NFT is listed for sale.
+        address nftContract; // The address of the NFT contract.
+        uint256 tokenId; // The ID of the NFT or batch of NFTs.
+        uint256 supply; // The supply of NFTs for ERC1155 tokens, set to 0 for ERC721.
+        PayoutToken payoutToken; // The desired token to receive as payment.
+        uint256 price; // The price at which the NFT is listed for sale.
     }
 
     /**
      * @dev Struct representing an active order on the marketplace.
      */
     struct Order {
-        address nftContract;  // The address of the NFT contract.
-        address seller;       // The address of the seller.
-        uint256 tokenId;      // The ID of the NFT or batch of NFTs.
-        uint256 supply;       // The supply of NFTs for ERC1155 tokens, set to 0 for ERC721.
-        PayoutToken payoutToken;  // The desired token to receive as payment.
-        uint256 price;        // The price at which the NFT is listed for sale.
+        address nftContract; // The address of the NFT contract.
+        address seller; // The address of the seller.
+        uint256 tokenId; // The ID of the NFT or batch of NFTs.
+        uint256 supply; // The supply of NFTs for ERC1155 tokens, set to 0 for ERC721.
+        PayoutToken payoutToken; // The desired token to receive as payment.
+        uint256 price; // The price at which the NFT is listed for sale.
     }
 
-    struct Price{
+    /**
+     * @dev Struct representing the details necessary to change the price.
+     */
+    struct Price {
         PayoutToken payoutToken; // The desired token to receive as payment.
         uint256 newPrice; // The new price for Order
     }
@@ -69,6 +70,11 @@ interface IMastodonMarketplace {
      */
     event Buy(uint256 indexed orderIndex, Order order);
 
+    /**
+     * @dev This event provides information about the updated price and payout token for a specific NFT listing.
+     * @param orderIndex The index of the NFT listing for which the price has been changed.
+     * @param newPrice A Price structure representing the new price and payout token for the NFT.
+     */
     event NewPrice(uint256 indexed orderIndex, Price newPrice);
 
     /**
@@ -89,6 +95,10 @@ interface IMastodonMarketplace {
      */
     function batchBuy(uint256[] calldata listIndexes) external payable;
 
-
-    function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external;
+    /**
+     * @notice Allows the order owner to change the prices of listed NFTs and the payout token.
+     * @param listIndexes An array of list indexes representing the NFTs for which the prices will be changed.
+     * @param newPrices An array of Price structures representing the new payout tokens & prices corresponding to the NFTs.
+     */
+    function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices ) external;
 }
