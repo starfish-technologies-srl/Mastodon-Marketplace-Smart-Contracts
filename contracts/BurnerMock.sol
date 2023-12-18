@@ -7,8 +7,8 @@ contract BurnerMock {
     IERC20 public xen;
 
     receive() external payable {
-    // This function is executed when a contract receives plain Ether (without data)
-}
+        // This function is executed when a contract receives plain Ether (without data)
+    }
 
     // Constructor to set the address of the ERC20 token
     constructor(IERC20 _erc20TokenAddress) {
@@ -21,7 +21,9 @@ contract BurnerMock {
     }
 
     // Function to get the balance of ERC20 token held by the contract
-    function getERC20TokenBalance(address tokenAddress) public view returns (uint256) {
+    function getERC20TokenBalance(
+        address tokenAddress
+    ) public view returns (uint256) {
         return IERC20(tokenAddress).balanceOf(address(this));
     }
 }
