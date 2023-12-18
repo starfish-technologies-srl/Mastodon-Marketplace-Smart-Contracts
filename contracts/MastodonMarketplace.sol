@@ -117,7 +117,7 @@ contract MastodonMarketplace is
     function _changePrice(uint256 listIndex, Price calldata newPrice) internal {
         require(
             orders[listIndex].seller == msg.sender,
-            "Mastodon: not the owner of order"
+            "Mastodon: not the order owner"
         );
 
         orders[listIndex].payoutToken = newPrice.payoutToken;
@@ -184,7 +184,7 @@ contract MastodonMarketplace is
     function _delist(uint256 listIndex) internal {
         require(
             orders[listIndex].seller == msg.sender,
-            "Mastodon: not owner of order"
+            "Mastodon: not the order owner"
         );
 
         if (
@@ -211,7 +211,7 @@ contract MastodonMarketplace is
                 orders[listIndex].supply,
                 "0x0"
             );
-        } else revert("not supported");
+        } else revert("Mastodon: not supported");
 
         delete (orders[listIndex]);
         emit Delist(globalIndex, orders[globalIndex]);
