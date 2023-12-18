@@ -2,6 +2,7 @@
 pragma solidity ^0.8.21;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IMastodonMarketplace} from "./IMastodonMarketplace.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
@@ -17,7 +18,8 @@ import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Recei
 contract MastodonMarketplace is
     IMastodonMarketplace,
     IERC721Receiver,
-    IERC1155Receiver
+    IERC1155Receiver,
+    ReentrancyGuard
 {
     /**
      * @notice The global index representing the unique identifier for NFT listings on the marketplace.
@@ -62,7 +64,9 @@ contract MastodonMarketplace is
      * @dev Batch lists multiple NFTs for sale on the marketplace.
      * @param inputOrders An array of InputOrder structures representing the NFTs to be listed.
      */
-    function batchList(InputOrder[] calldata inputOrders) external {
+    function batchList(
+        InputOrder[] calldata inputOrders
+    ) external nonReentrant {
         uint256 arrayLength = inputOrders.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _list(inputOrders[i]);
@@ -73,7 +77,7 @@ contract MastodonMarketplace is
      * @dev Batch delists multiple NFTs from the marketplace.
      * @param listIndexes An array of list indexes representing the NFTs to be delisted.
      */
-    function batchDelist(uint256[] calldata listIndexes) external {
+    function batchDelist(uint256[] calldata listIndexes) external nonReentrant {
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _delist(listIndexes[i]);
@@ -84,7 +88,9 @@ contract MastodonMarketplace is
      * @dev Batch buys multiple NFTs from the marketplace.
      * @param listIndexes An array of list indexes representing the NFTs to be bought.
      */
-    function batchBuy(uint256[] calldata listIndexes) external payable {
+    function batchBuy(
+        uint256[] calldata listIndexes
+    ) external payable nonReentrant {
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _buy(listIndexes[i]);
@@ -204,7 +210,8 @@ contract MastodonMarketplace is
      */
     function _buy(uint256 listIndex) internal {
         uint256 sellerProceeds = (orders[listIndex].price * 9600) / MAX_BPS;
-        uint256 developerFee = (orders[listIndex].price * DEV_FEE_BPS) / MAX_BPS;
+        uint256 developerFee = (orders[listIndex].price * DEV_FEE_BPS) /
+            MAX_BPS;
         uint256 burnAmount = (orders[listIndex].price * BURN_FEE_BPS) / MAX_BPS;
 
         if (orders[listIndex].payoutToken == PayoutToken.NativeToken) {
@@ -213,7 +220,9 @@ contract MastodonMarketplace is
                 "Mastodon: invalid price"
             );
 
-            (bool success, ) = orders[listIndex].seller.call{value: sellerProceeds}("");
+            (bool success, ) = orders[listIndex].seller.call{
+                value: sellerProceeds
+            }("");
             require(success, "1.Payment failed.");
 
             (success, ) = dev.call{value: developerFee}("");
@@ -232,7 +241,10 @@ contract MastodonMarketplace is
 
             dxn.transfer(dev, developerFee);
 
-            dxn.transfer(0x0000000000000000000000000000000000000000, burnAmount);
+            dxn.transfer(
+                0x0000000000000000000000000000000000000000,
+                burnAmount
+            );
         }
 
         if (orders[listIndex].supply == 0) {
