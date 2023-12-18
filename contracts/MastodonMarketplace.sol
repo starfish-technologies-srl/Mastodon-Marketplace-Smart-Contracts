@@ -91,6 +91,22 @@ contract MastodonMarketplace is
         }
     }
 
+    function changePrice(uint256[] calldata listIndexes) external {
+        uint256 arrayLength = listIndexes.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
+            _changePrice(listIndexes[i]);
+        }
+    }
+
+    function _changePrice(uint256 listIndex) internal {
+        require(
+            orders[listIndex].seller == msg.sender,
+            "Mastodon: not owner of order"
+        );
+
+        // orders[listIndex].price
+    }
+
     /**
      * @dev Lists a single NFT for sale on the marketplace.
      * @param inputOrder An InputOrder structure representing the NFT to be listed.
@@ -187,9 +203,9 @@ contract MastodonMarketplace is
      * @param listIndex The index of the NFT to be bought.
      */
     function _buy(uint256 listIndex) internal {
-        uint256 toSeller = (orders[listIndex].price * 9600) / MAX_BPS;
-        uint256 toDev = (orders[listIndex].price * DEV_FEE_BPS) / MAX_BPS;
-        uint256 toBurn = (orders[listIndex].price * BURN_FEE_BPS) / MAX_BPS;
+        uint256 sellerProceeds = (orders[listIndex].price * 9600) / MAX_BPS;
+        uint256 developerFee = (orders[listIndex].price * DEV_FEE_BPS) / MAX_BPS;
+        uint256 burnAmount = (orders[listIndex].price * BURN_FEE_BPS) / MAX_BPS;
 
         if (orders[listIndex].payoutToken == PayoutToken.NativeToken) {
             require(
@@ -197,28 +213,26 @@ contract MastodonMarketplace is
                 "Mastodon: invalid price"
             );
 
-            (bool success, ) = orders[listIndex].seller.call{value: toSeller}(
-                ""
-            );
+            (bool success, ) = orders[listIndex].seller.call{value: sellerProceeds}("");
             require(success, "1.Payment failed.");
 
-            (success, ) = dxnBuyBurn.call{value: toBurn}("");
+            (success, ) = dev.call{value: developerFee}("");
             require(success, "2.Payment failed.");
 
-            (success, ) = dev.call{value: toDev}("");
+            (success, ) = dxnBuyBurn.call{value: burnAmount}("");
             require(success, "3.Payment failed.");
         } else if (orders[listIndex].payoutToken == PayoutToken.Xen) {
-            xen.transfer(orders[listIndex].seller, toSeller);
+            xen.transfer(orders[listIndex].seller, sellerProceeds);
 
-            xen.transfer(orders[listIndex].seller, toDev);
+            xen.transfer(dev, developerFee);
 
-            xen.transfer(dxnBuyBurn, toBurn);
+            xen.transfer(dxnBuyBurn, burnAmount);
         } else {
-            dxn.transfer(orders[listIndex].seller, toSeller);
+            dxn.transfer(orders[listIndex].seller, sellerProceeds);
 
-            dxn.transfer(orders[listIndex].seller, toDev);
+            dxn.transfer(dev, developerFee);
 
-            dxn.transfer(0x0000000000000000000000000000000000000000, toBurn);
+            dxn.transfer(0x0000000000000000000000000000000000000000, burnAmount);
         }
 
         if (orders[listIndex].supply == 0) {

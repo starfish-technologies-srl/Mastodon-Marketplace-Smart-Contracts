@@ -83,4 +83,6 @@ interface IMastodonMarketplace {
     function batchBuy(uint256[] calldata listIndexes) external payable;
 
     //TODO changePrice function
+
+    function changePrice(uint256[] calldata listIndexes) external;
 }
