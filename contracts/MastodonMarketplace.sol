@@ -93,7 +93,7 @@ contract MastodonMarketplace is
         }
     }
 
-    function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external nonReentrant{
+    function changePrice(uint256[] calldata listIndexes, Price[] calldata newPrices) external nonReentrant {
         require(listIndexes.length == newPrices.length, "Mastodon: length diff");
 
         uint256 arrayLength = listIndexes.length;
