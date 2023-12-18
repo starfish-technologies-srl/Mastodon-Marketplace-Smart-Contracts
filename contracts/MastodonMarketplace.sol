@@ -32,17 +32,17 @@ contract MastodonMarketplace is
     uint8 private constant BURN_FEE_BPS = 250;
     uint16 private constant MAX_BPS = 10000;
 
-    //The address of the contract developer.
-    address public immutable dev;
-
     //The ERC20 token contract address for the $XEN token.
     IERC20 public immutable xen;
 
     //The ERC20 token contract address for the $DXN token.
     IERC20 public immutable dxn;
 
+    //The address of the contract developer.
+    address public immutable dev;
+
     //The address of smart contract designated for burning DXN tokens.
-    address public immutable dxnBuyBurn;
+    address public dxnBuyBurn;
 
     // Mapping to store NFT orders
     mapping(uint256 listIndex => Order order) public orders;
@@ -261,6 +261,18 @@ contract MastodonMarketplace is
 
         delete (orders[listIndex]);
         emit Buy(globalIndex, orders[globalIndex]);
+    }
+
+    /**
+     * @notice Sets the address for burning DXN tokens.
+     * @param _dxnBuyBurn The new address designated for burning DXN tokens.
+     * It is designed specifically to ensure the smooth process of buying and burning DXN tokens
+     * in case the current pool faces unforeseen challenges or gets compromised.
+     */
+    function setDxnBuyBurn(address _dxnBuyBurn) external {
+        require(msg.sender == dev, "Mastodon: not dev");
+
+        dxnBuyBurn = _dxnBuyBurn;
     }
 
     // ERC721 and ERC1155 receiver functions... //
