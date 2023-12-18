@@ -108,25 +108,6 @@ contract MastodonMarketplace is
     }
 
     /**
-     * @notice Updates the price and payout token for a specific NFT listing.
-     * @dev Only the owner of the NFT listing can change its price.
-     * @param listIndex The index of the NFT listing to be updated.
-     * @param newPrice A Price structure representing the new price and payout token for the NFT.
-     * @dev This function is called internally by changePrice and is not meant for direct external use.
-     */
-    function _changePrice(uint256 listIndex, Price calldata newPrice) internal {
-        require(
-            orders[listIndex].seller == msg.sender,
-            "Mastodon: not the order owner"
-        );
-
-        orders[listIndex].payoutToken = newPrice.payoutToken;
-        orders[listIndex].price = newPrice.newPrice;
-
-        emit NewPrice(listIndex, newPrice);
-    }
-
-    /**
      * @dev Lists a single NFT for sale on the marketplace.
      * @param inputOrder An InputOrder structure representing the NFT to be listed.
      */
@@ -278,6 +259,23 @@ contract MastodonMarketplace is
 
         delete (orders[listIndex]);
         emit Buy(globalIndex, orders[globalIndex]);
+    }
+
+    /**
+     * @dev Updates the price and payout token for a specific NFT listing.
+     * @param listIndex The index of the NFT listing to be updated.
+     * @param newPrice A Price structure representing the new price and payout token for the NFT.
+     */
+    function _changePrice(uint256 listIndex, Price calldata newPrice) internal {
+        require(
+            orders[listIndex].seller == msg.sender,
+            "Mastodon: not the order owner"
+        );
+
+        orders[listIndex].payoutToken = newPrice.payoutToken;
+        orders[listIndex].price = newPrice.newPrice;
+
+        emit NewPrice(listIndex, newPrice);
     }
 
     /**
