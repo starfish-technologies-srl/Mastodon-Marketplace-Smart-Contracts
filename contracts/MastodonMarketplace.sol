@@ -64,9 +64,7 @@ contract MastodonMarketplace is
      * @dev Batch lists multiple NFTs for sale on the marketplace.
      * @param inputOrders An array of InputOrder structures representing the NFTs to be listed.
      */
-    function batchList(
-        InputOrder[] calldata inputOrders
-    ) external nonReentrant {
+    function batchList(InputOrder[] calldata inputOrders) external nonReentrant {
         uint256 arrayLength = inputOrders.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _list(inputOrders[i]);
@@ -88,16 +86,14 @@ contract MastodonMarketplace is
      * @dev Batch buys multiple NFTs from the marketplace.
      * @param listIndexes An array of list indexes representing the NFTs to be bought.
      */
-    function batchBuy(
-        uint256[] calldata listIndexes
-    ) external payable nonReentrant {
+    function batchBuy(uint256[] calldata listIndexes) external payable nonReentrant {
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _buy(listIndexes[i]);
         }
     }
 
-    function changePrice(uint256[] calldata listIndexes) external {
+    function changePrice(uint256[] calldata listIndexes) external nonReentrant{
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
             _changePrice(listIndexes[i]);
