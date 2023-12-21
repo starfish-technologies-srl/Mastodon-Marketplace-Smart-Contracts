@@ -194,8 +194,8 @@ contract MastodonMarketplace is
             );
         } else revert("Mastodon: not supported");
 
+        emit Delist(listIndex, orders[listIndex]);
         delete (orders[listIndex]);
-        emit Delist(globalIndex, orders[globalIndex]);
     }
 
     /**
@@ -257,8 +257,8 @@ contract MastodonMarketplace is
             );
         }
 
+        emit Buy(listIndex, orders[listIndex]);
         delete (orders[listIndex]);
-        emit Buy(globalIndex, orders[globalIndex]);
     }
 
     /**
