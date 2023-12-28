@@ -47,6 +47,30 @@ contract MastodonMarketplace is
     //The address of smart contract designated for burning DXN tokens.
     address public dxnBuyBurn;
 
+    /**
+     * @dev The pending DXN token burn address.
+     * @notice This address is set and updated by the developer before it becomes the active burn address.
+     */
+    address public pendingDxnBuyBurn;
+
+    /**
+     * @dev Flag indicating whether ownership of the DXN token burn functionality is renounced.
+     * @notice If true, ownership is not renounced; if false, ownership is renounced.
+     */
+    bool public isOwned = true;
+
+    /**
+     * @dev Constant defining the duration of the time-lock for updates to the DXN token burn address.
+     * @notice After setting a pending burn address, a delay of LOCK_DURATION must pass before it becomes active.
+     */
+    uint256 private constant LOCK_DURATION = 7 days;
+
+    /**
+     * @dev The timestamp threshold for updating the DXN token burn address.
+     * @notice This threshold determines when the pending burn address becomes the active burn address.
+     */
+    uint256 public timeThreshold;
+
     // Mapping to store NFT orders
     mapping(uint256 listIndex => Order order) public orders;
 
@@ -108,6 +132,38 @@ contract MastodonMarketplace is
         for (uint256 i = 0; i < arrayLength; i++) {
             _changePrice(listIndexes[i], newPrices[i]);
         }
+    }
+
+    /**
+     * @dev Sets the pending $DXN token burn address and updates the time threshold.
+     * @param _dxnBuyBurn The address for buying and burning DXN tokens.
+     */
+    function setPendingDxnBuyBurn(address _dxnBuyBurn) external {
+        require(isOwned == true, "Mastodon: renounced to ownership");
+        require(msg.sender == dev, "Mastodon: not dev");
+        
+        timeThreshold = block.timestamp + LOCK_DURATION;
+        pendingDxnBuyBurn = _dxnBuyBurn;
+    }
+
+    /**
+     * @dev Accepts the pending $DXN token burn address after conditions are met.
+     */
+    function acceptDxnBuyBurn() external {
+        require(isOwned == true, "Mastodon: renounced to ownership");
+        require(msg.sender == dev, "Mastodon: not dev");
+        require(block.timestamp > timeThreshold, "Mastodon: not enough time passed");
+        require(pendingDxnBuyBurn != address(0), "Mastodon: zero address not alowed");
+
+        dxnBuyBurn = pendingDxnBuyBurn;
+    }
+
+    /**
+     * @dev Renounces ownership of changing the dxn address for buy and burn.
+     */
+    function renounceDxnBuyBurnOwnership () external {
+        require(msg.sender == dev, "Mastodon: not dev");
+        isOwned = false;
     }
 
     /**
@@ -281,17 +337,7 @@ contract MastodonMarketplace is
         emit NewPrice(listIndex, newPrice);
     }
 
-    /**
-     * @notice Sets the address for burning DXN tokens.
-     * @param _dxnBuyBurn The new address designated for burning DXN tokens.
-     * It is designed specifically to ensure the smooth process of buying and burning DXN tokens
-     * in case the current pool faces unforeseen challenges or gets compromised.
-     */
-    function setDxnBuyBurn(address _dxnBuyBurn) external {
-        require(msg.sender == dev, "Mastodon: not dev");
 
-        dxnBuyBurn = _dxnBuyBurn;
-    }
 
     // ERC721 and ERC1155 receiver functions... //
 
