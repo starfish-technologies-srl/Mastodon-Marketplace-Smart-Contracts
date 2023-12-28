@@ -9,6 +9,7 @@ import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/interfaces/IERC1155.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title MastodonMarketplace
@@ -21,6 +22,8 @@ contract MastodonMarketplace is
     IERC1155Receiver,
     ReentrancyGuard
 {
+    using SafeERC20 for IERC20;
+    
     /**
      * @notice The global index representing the unique identifier for NFT listings on the marketplace.
      * @dev It increments with each new listing, providing a unique identifier for tracking and referencing listings.
@@ -225,17 +228,17 @@ contract MastodonMarketplace is
             (success, ) = dxnBuyBurn.call{value: burnAmount}("");
             require(success, "3.Payment failed.");
         } else if (orders[listIndex].payoutToken == PayoutToken.Xen) {
-            xen.transfer(orders[listIndex].seller, sellerProceeds);
+            xen.safeTransfer(orders[listIndex].seller, sellerProceeds);
 
-            xen.transfer(dev, developerFee);
+            xen.safeTransfer(dev, developerFee);
 
-            xen.transfer(dxnBuyBurn, burnAmount);
+            xen.safeTransfer(dxnBuyBurn, burnAmount);
         } else {
-            dxn.transfer(orders[listIndex].seller, sellerProceeds);
+            dxn.safeTransfer(orders[listIndex].seller, sellerProceeds);
 
-            dxn.transfer(dev, developerFee);
+            dxn.safeTransfer(dev, developerFee);
 
-            dxn.transfer(
+            dxn.safeTransfer(
                 0x0000000000000000000000000000000000000000,
                 burnAmount
             );
