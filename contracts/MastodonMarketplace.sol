@@ -262,16 +262,14 @@ contract MastodonMarketplace is
      * @param listIndex The index of the NFT to be bought.
      */
     function _buy(uint256 listIndex) internal {
-        uint256 sellerProceeds = (orders[listIndex].price * 9600) / MAX_BPS;
-        uint256 developerFee = (orders[listIndex].price * DEV_FEE_BPS) /
-            MAX_BPS;
-        uint256 burnAmount = (orders[listIndex].price * BURN_FEE_BPS) / MAX_BPS;
+        uint256 price = orders[listIndex].price;
+
+        uint256 sellerProceeds = (price * 9600) / MAX_BPS;
+        uint256 developerFee = (price * DEV_FEE_BPS) /MAX_BPS;
+        uint256 burnAmount = (price * BURN_FEE_BPS) / MAX_BPS;
 
         if (orders[listIndex].payoutToken == PayoutToken.NativeToken) {
-            require(
-                msg.value == orders[listIndex].price,
-                "Mastodon: invalid price"
-            );
+            require(address(this).balance >= price, "Mastodon: invalid price");
 
             (bool success, ) = orders[listIndex].seller.call{
                 value: sellerProceeds

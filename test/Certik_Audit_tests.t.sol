@@ -24,13 +24,15 @@ contract BuyTest is Test {
         vm.stopPrank();
     }
 
+    // MMM-13 | UNCHECKED ERC-20 transfer() / transferFrom() CALL
     // TODO: Verify why the test passes before adding SafeERC and also after adding it.
     function testBuywithERC20Token() public {
         vm.startPrank(user1);
         erc721.setApprovalForAll(address(market), true);
 
         erc721.mint(user1);
-        IMastodonMarketplace.InputOrder[] memory inputOrders = new IMastodonMarketplace.InputOrder[](2);
+        IMastodonMarketplace.InputOrder[]
+            memory inputOrders = new IMastodonMarketplace.InputOrder[](2);
         inputOrders[0].nftContract = address(erc721);
         inputOrders[0].tokenId = 1; //
         inputOrders[0].supply = 0;
@@ -55,6 +57,46 @@ contract BuyTest is Test {
         lists[1] = 2;
         vm.expectRevert();
         market.batchBuy(lists);
+        vm.stopPrank();
+    }
+
+    // MMM-09 | ORDERS WITH NATIVE TOKEN PAYMENT NOT SUPPORT BATCH MODE
+    function testBuywithNativeToken() public {
+        vm.startPrank(user1);
+        erc721.setApprovalForAll(address(market), true);
+
+        erc721.mint(user1);
+        IMastodonMarketplace.InputOrder[]
+            memory inputOrders = new IMastodonMarketplace.InputOrder[](2);
+        inputOrders[0].nftContract = address(erc721);
+        inputOrders[0].tokenId = 1;
+        inputOrders[0].supply = 0;
+        inputOrders[0].payoutToken = IMastodonMarketplace
+            .PayoutToken
+            .NativeToken;
+        inputOrders[0].price = 1 ether;
+
+        erc721.mint(user1);
+        inputOrders[1].nftContract = address(erc721);
+        inputOrders[1].tokenId = 2;
+        inputOrders[1].supply = 0;
+        inputOrders[1].payoutToken = IMastodonMarketplace
+            .PayoutToken
+            .NativeToken;
+        inputOrders[1].price = 1 ether;
+
+        market.batchList(inputOrders);
+        vm.stopPrank();
+        vm.startPrank(user2);
+        deal(user2, 2 ether);
+        uint256[] memory lists = new uint256[](2);
+        lists[0] = 1;
+        lists[1] = 2;
+        // certik: revert when buying
+        // vm.expectRevert();
+        // market.batchBuy{value: 1 ether}(lists);
+
+        market.batchBuy{value: 2 ether}(lists);
         vm.stopPrank();
     }
 }
