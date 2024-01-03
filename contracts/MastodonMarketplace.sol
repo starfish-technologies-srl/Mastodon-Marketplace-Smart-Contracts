@@ -43,7 +43,8 @@ contract MastodonMarketplace is
     //The address of the contract developer.
     address public immutable dev;
 
-    //The address of smart contract designated for burning DXN tokens.
+    //The address of smart contract designated to BUY & BURN $DXN tokens
+    //with $XEN token and native token of blockchain.
     address public dxnBuyBurn;
 
     /**
