@@ -21,8 +21,8 @@ interface IMastodonMarketplace {
     enum AssetClass {
         ERC721, // Represents a single ERC721 token.
         ERC1155, // Represents an ERC1155 token.
-        BothClass_ERC721,
-        BothClass_ERC1155
+        BothClass_ERC721, // Represents the smart contracts that inherit
+        BothClass_ERC1155 // ERC721 & ERC1155 but it will transfer one type in sc
     }
 
     /**
