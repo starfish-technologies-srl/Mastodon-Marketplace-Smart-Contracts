@@ -379,7 +379,7 @@ contract MastodonMarketplace is
         uint256[] calldata values,
         bytes calldata data
     ) external returns (bytes4) {
-        return (this.onERC1155Received.selector);
+        return (this.onERC1155BatchReceived.selector);
     }
 
     /**
