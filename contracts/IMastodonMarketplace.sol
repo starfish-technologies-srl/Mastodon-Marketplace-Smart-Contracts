@@ -18,6 +18,13 @@ interface IMastodonMarketplace {
         Dxn // ERC20 token (Dxn)
     }
 
+    enum AssetClass {
+        ERC721, // Represents a single ERC721 token.
+        ERC1155, // Represents an ERC1155 token.
+        BothClass_ERC721,
+        BothClass_ERC1155
+    }
+
     /**
      * @dev Struct representing the details of an NFT listing.
      */
@@ -39,6 +46,7 @@ interface IMastodonMarketplace {
         uint256 supply; // The supply of NFTs for ERC1155 tokens, set to 0 for ERC721.
         PayoutToken payoutToken; // The desired token to receive as payment.
         uint256 price; // The price at which the NFT is listed for sale.
+        AssetClass assetClass; // The type of NFT collection
     }
 
     /**

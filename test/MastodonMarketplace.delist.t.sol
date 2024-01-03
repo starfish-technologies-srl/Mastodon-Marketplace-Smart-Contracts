@@ -47,6 +47,7 @@ contract Delist is Test {
         uint256 input_supply = 0; //always 0 for ERC721
         IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
         uint256 input_price = 1;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         IMastodonMarketplace.InputOrder[]
             memory inputOrders = new IMastodonMarketplace.InputOrder[](1);
@@ -70,7 +71,8 @@ contract Delist is Test {
             uint256 tokenId,
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
-            uint256 price
+            uint256 price,
+            IMastodonMarketplace.AssetClass assetClass
         ) = mastodonMarketplace.orders(1);
 
         assertEq(nftContract, address(erc721Mock));
@@ -79,7 +81,7 @@ contract Delist is Test {
         assertEq(supply, input_supply);
         assertEq(uint8(payoutToken), uint8(input_payoutToken));
         assertEq(price, input_price);
-
+        assertEq(uint8(assetClass), uint8(expected_assetClass));
 
         uint256[] memory delistIndexes = new uint256[](1);
         delistIndexes[0] = 1;
@@ -95,6 +97,7 @@ contract Delist is Test {
         uint256 input_supply = 10;
         IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
         uint256 input_price = 1;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         IMastodonMarketplace.InputOrder[]
             memory inputOrders = new IMastodonMarketplace.InputOrder[](1);
@@ -118,7 +121,8 @@ contract Delist is Test {
             uint256 tokenId,
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
-            uint256 price
+            uint256 price,
+            IMastodonMarketplace.AssetClass assetClass
         ) = mastodonMarketplace.orders(1);
 
         assertEq(nftContract, address(erc1155Mock));

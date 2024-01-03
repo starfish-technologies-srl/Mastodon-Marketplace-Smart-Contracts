@@ -53,6 +53,7 @@ contract List is Test {
                 .PayoutToken
                 .NativeToken;
         uint256 input_price = 1 ether;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
         uint8 BURN_FEE_BPS = 250;
@@ -83,7 +84,7 @@ contract List is Test {
             uint256 tokenId,
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
-            uint256 price
+            uint256 price,
         ) = mastodonMarketplace.orders(1);
 
         uint256[] memory buyIndexes = new uint256[](1);
@@ -106,6 +107,7 @@ contract List is Test {
                 .PayoutToken
                 .NativeToken;
         uint256 input_price = 1 ether;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
         uint8 BURN_FEE_BPS = 250;
@@ -136,7 +138,7 @@ contract List is Test {
             uint256 tokenId,
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
-            uint256 price
+            uint256 price,
         ) = mastodonMarketplace.orders(1);
 
         uint256[] memory buyIndexes = new uint256[](1);

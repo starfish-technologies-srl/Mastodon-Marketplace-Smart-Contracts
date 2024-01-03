@@ -23,7 +23,6 @@ contract MastodonMarketplace is
     ReentrancyGuard
 {
     using SafeERC20 for IERC20;
-    
     /**
      * @notice The global index representing the unique identifier for NFT listings on the marketplace.
      * @dev It increments with each new listing, providing a unique identifier for tracking and referencing listings.
@@ -141,7 +140,6 @@ contract MastodonMarketplace is
     function setPendingDxnBuyBurn(address _dxnBuyBurn) external {
         require(isOwned == true, "Mastodon: renounced to ownership");
         require(msg.sender == dev, "Mastodon: not dev");
-        
         timeThreshold = block.timestamp + LOCK_DURATION;
         pendingDxnBuyBurn = _dxnBuyBurn;
     }
@@ -174,37 +172,32 @@ contract MastodonMarketplace is
         globalIndex++;
 
         Order storage newOrder = orders[globalIndex];
+        newOrder.nftContract = inputOrder.nftContract;
+        newOrder.tokenId = inputOrder.tokenId;
+        newOrder.payoutToken = inputOrder.payoutToken;
+        newOrder.price = inputOrder.price;
+        newOrder.seller = msg.sender;
 
-        if (
-            ERC165Checker.supportsInterface(
-                inputOrder.nftContract,
-                type(IERC721).interfaceId
-            )
-        ) {
-            newOrder.nftContract = inputOrder.nftContract;
-            newOrder.tokenId = inputOrder.tokenId;
-            newOrder.payoutToken = inputOrder.payoutToken;
-            newOrder.price = inputOrder.price;
-            newOrder.seller = msg.sender;
+        bool supportsERC721 = ERC165Checker.supportsInterface(
+            inputOrder.nftContract,
+            type(IERC721).interfaceId
+        );
+        bool supportsERC1155 = ERC165Checker.supportsInterface(
+            inputOrder.nftContract,
+            type(IERC1155).interfaceId
+        );
 
+        if (supportsERC721 && !supportsERC1155) {
+            newOrder.assetClass = AssetClass.ERC721;
             IERC721(inputOrder.nftContract).safeTransferFrom(
                 msg.sender,
                 address(this),
                 inputOrder.tokenId
             );
-        } else if (
-            ERC165Checker.supportsInterface(
-                inputOrder.nftContract,
-                type(IERC1155).interfaceId
-            )
-        ) {
-            newOrder.nftContract = inputOrder.nftContract;
-            newOrder.tokenId = inputOrder.tokenId;
+        } else if (!supportsERC721 && supportsERC1155) {
+            require(inputOrder.supply > 0, "Mastodon: erc1155 supply > 0");
             newOrder.supply = inputOrder.supply;
-            newOrder.payoutToken = inputOrder.payoutToken;
-            newOrder.price = inputOrder.price;
-            newOrder.seller = msg.sender;
-
+            newOrder.assetClass = AssetClass.ERC1155;
             IERC1155(inputOrder.nftContract).safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -212,7 +205,28 @@ contract MastodonMarketplace is
                 inputOrder.supply,
                 "0x0"
             );
-        } else revert("Mastodon: not supported");
+        } else if (supportsERC721 && supportsERC1155) {
+            if (inputOrder.supply == 0) {
+                newOrder.assetClass = AssetClass.BothClass_ERC721;
+                IERC721(inputOrder.nftContract).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    inputOrder.tokenId
+                );
+            } else {
+                newOrder.assetClass = AssetClass.BothClass_ERC1155;
+                newOrder.supply = inputOrder.supply;
+                IERC1155(inputOrder.nftContract).safeTransferFrom(
+                    msg.sender,
+                    address(this),
+                    inputOrder.tokenId,
+                    inputOrder.supply,
+                    "0x0"
+                );
+            }
+        } else {
+            revert("Mastodon: not supported");
+        }
 
         emit List(globalIndex, newOrder);
     }
@@ -227,11 +241,11 @@ contract MastodonMarketplace is
             "Mastodon: not the order owner"
         );
 
+        Order memory order = orders[listIndex];
+
         if (
-            ERC165Checker.supportsInterface(
-                orders[listIndex].nftContract,
-                type(IERC721).interfaceId
-            )
+            order.assetClass == AssetClass.ERC721 ||
+            order.assetClass == AssetClass.BothClass_ERC721
         ) {
             IERC721(orders[listIndex].nftContract).safeTransferFrom(
                 address(this),
@@ -239,21 +253,20 @@ contract MastodonMarketplace is
                 orders[listIndex].tokenId
             );
         } else if (
-            ERC165Checker.supportsInterface(
-                orders[listIndex].nftContract,
-                type(IERC1155).interfaceId
-            )
+            order.assetClass == AssetClass.ERC1155 ||
+            order.assetClass == AssetClass.BothClass_ERC1155
+
         ) {
             IERC1155(orders[listIndex].nftContract).safeTransferFrom(
                 address(this),
                 msg.sender,
-                orders[listIndex].tokenId,
-                orders[listIndex].supply,
+                order.tokenId,
+                order.supply,
                 "0x0"
             );
         } else revert("Mastodon: not supported");
 
-        emit Delist(listIndex, orders[listIndex]);
+        emit Delist(listIndex, order);
         delete (orders[listIndex]);
     }
 
@@ -262,16 +275,18 @@ contract MastodonMarketplace is
      * @param listIndex The index of the NFT to be bought.
      */
     function _buy(uint256 listIndex) internal {
-        uint256 price = orders[listIndex].price;
+        Order memory order = orders[listIndex];
+
+        uint256 price = order.price;
 
         uint256 sellerProceeds = (price * 9600) / MAX_BPS;
         uint256 developerFee = (price * DEV_FEE_BPS) /MAX_BPS;
         uint256 burnAmount = (price * BURN_FEE_BPS) / MAX_BPS;
 
-        if (orders[listIndex].payoutToken == PayoutToken.NativeToken) {
+        if (order.payoutToken == PayoutToken.NativeToken) {
             require(address(this).balance >= price, "Mastodon: invalid price");
 
-            (bool success, ) = orders[listIndex].seller.call{
+            (bool success, ) = order.seller.call{
                 value: sellerProceeds
             }("");
             require(success, "1.Payment failed.");
@@ -281,14 +296,14 @@ contract MastodonMarketplace is
 
             (success, ) = dxnBuyBurn.call{value: burnAmount}("");
             require(success, "3.Payment failed.");
-        } else if (orders[listIndex].payoutToken == PayoutToken.Xen) {
-            xen.safeTransfer(orders[listIndex].seller, sellerProceeds);
+        } else if (order.payoutToken == PayoutToken.Xen) {
+            xen.safeTransfer(order.seller, sellerProceeds);
 
             xen.safeTransfer(dev, developerFee);
 
             xen.safeTransfer(dxnBuyBurn, burnAmount);
         } else {
-            dxn.safeTransfer(orders[listIndex].seller, sellerProceeds);
+            dxn.safeTransfer(order.seller, sellerProceeds);
 
             dxn.safeTransfer(dev, developerFee);
 
@@ -298,18 +313,19 @@ contract MastodonMarketplace is
             );
         }
 
-        if (orders[listIndex].supply == 0) {
-            IERC721(orders[listIndex].nftContract).safeTransferFrom(
+        if (order.assetClass == AssetClass.ERC721 ||
+            order.assetClass == AssetClass.BothClass_ERC721) {
+            IERC721(order.nftContract).safeTransferFrom(
                 address(this),
                 msg.sender,
-                orders[listIndex].tokenId
+                order.tokenId
             );
         } else {
-            IERC1155(orders[listIndex].nftContract).safeTransferFrom(
+            IERC1155(order.nftContract).safeTransferFrom(
                 address(this),
                 msg.sender,
-                orders[listIndex].tokenId,
-                orders[listIndex].supply,
+                order.tokenId,
+                order.supply,
                 "0x0"
             );
         }
@@ -334,8 +350,6 @@ contract MastodonMarketplace is
 
         emit NewPrice(listIndex, newPrice);
     }
-
-
 
     // ERC721 and ERC1155 receiver functions... //
 
