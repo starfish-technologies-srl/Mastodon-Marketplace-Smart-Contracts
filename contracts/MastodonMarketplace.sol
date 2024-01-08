@@ -298,17 +298,18 @@ contract MastodonMarketplace is
             (success, ) = dxnBuyBurn.call{value: burnAmount}("");
             require(success, "3.Payment failed.");
         } else if (order.payoutToken == PayoutToken.Xen) {
-            xen.safeTransfer(order.seller, sellerProceeds);
+            xen.safeTransferFrom(msg.sender, order.seller, sellerProceeds);
 
-            xen.safeTransfer(dev, developerFee);
+            xen.safeTransferFrom(msg.sender, dev, developerFee);
 
-            xen.safeTransfer(dxnBuyBurn, burnAmount);
+            xen.safeTransferFrom(msg.sender, dxnBuyBurn, burnAmount);
         } else {
-            dxn.safeTransfer(order.seller, sellerProceeds);
+            dxn.safeTransferFrom(msg.sender, order.seller, sellerProceeds);
 
-            dxn.safeTransfer(dev, developerFee);
+            dxn.safeTransferFrom(msg.sender, dev, developerFee);
 
-            dxn.safeTransfer(
+            dxn.safeTransferFrom(
+                msg.sender,
                 0x000000000000000000000000000000000000dEaD,
                 burnAmount
             );
