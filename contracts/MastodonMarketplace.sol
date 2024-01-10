@@ -81,6 +81,8 @@ contract MastodonMarketplace is
      * @param _dxnBuyBurn The address of smart contract for burning DXN tokens.
      */
     constructor(IERC20 _xen, IERC20 _dxn, address _dxnBuyBurn) {
+        require(_dxnBuyBurn != address(0), "Mastodon: zero address is not allowed");
+
         xen = _xen;
         dxn = _dxn;
         dxnBuyBurn = _dxnBuyBurn;
@@ -141,6 +143,8 @@ contract MastodonMarketplace is
     function setPendingDxnBuyBurn(address _dxnBuyBurn) external {
         require(isOwned == true, "Mastodon: renounced to ownership");
         require(msg.sender == dev, "Mastodon: not dev");
+        require(_dxnBuyBurn != address(0), "Mastodon: zero address is not allowed");
+
         timeThreshold = block.timestamp + LOCK_DURATION;
         pendingDxnBuyBurn = _dxnBuyBurn;
     }
@@ -152,7 +156,6 @@ contract MastodonMarketplace is
         require(isOwned == true, "Mastodon: renounced to ownership");
         require(msg.sender == dev, "Mastodon: not dev");
         require(block.timestamp > timeThreshold, "Mastodon: not enough time passed");
-        require(pendingDxnBuyBurn != address(0), "Mastodon: zero address not alowed");
 
         dxnBuyBurn = pendingDxnBuyBurn;
     }
