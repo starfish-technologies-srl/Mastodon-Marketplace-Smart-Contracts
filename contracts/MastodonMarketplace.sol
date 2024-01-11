@@ -120,6 +120,13 @@ contract MastodonMarketplace is
         for (uint256 i = 0; i < arrayLength; i++) {
             _buy(listIndexes[i]);
         }
+
+        if(address(this).balance > 0){
+            (bool success, ) = msg.sender.call{
+                value: msg.value
+            }("");
+            require(success, "Mastodon: remaining funds failed");
+        }
     }
 
     /**
@@ -293,13 +300,13 @@ contract MastodonMarketplace is
             (bool success, ) = order.seller.call{
                 value: sellerProceeds
             }("");
-            require(success, "1.Payment failed.");
+            require(success, "Mastodon: 1.Payment failed.");
 
             (success, ) = dev.call{value: developerFee}("");
-            require(success, "2.Payment failed.");
+            require(success, "Mastodon: 2.Payment failed.");
 
             (success, ) = dxnBuyBurn.call{value: burnAmount}("");
-            require(success, "3.Payment failed.");
+            require(success, "Mastodon: 3.Payment failed.");
         } else if (order.payoutToken == PayoutToken.Xen) {
             xen.safeTransferFrom(msg.sender, order.seller, sellerProceeds);
 
