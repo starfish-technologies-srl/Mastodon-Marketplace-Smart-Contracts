@@ -123,7 +123,7 @@ contract MastodonMarketplace is
 
         if(address(this).balance > 0){
             (bool success, ) = msg.sender.call{
-                value: msg.value
+                value: address(this).balance
             }("");
             require(success, "Mastodon: remaining funds failed");
         }
