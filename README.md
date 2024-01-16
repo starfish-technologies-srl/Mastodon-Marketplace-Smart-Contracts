@@ -5,6 +5,8 @@ Mastodon Marketplace is a decentralized marketplace designed for the trading of 
 ### Audit
 
 - [Certik](https://skynet.certik.com/projects/mastodon-marketplace)
+  
+  ![Screenshot from 2024-01-17 00-23-57](https://github.com/starfish-technologies-srl/Mastodon-Marketplace-Smart-Contracts/assets/64739117/690cfc90-35d8-4d01-b1ea-1fa269a1073c)
 
 ### Useful Links
 
