@@ -109,4 +109,12 @@ interface IMastodonMarketplace {
      * @param newPrices An array of Price structures representing the new payout tokens & prices corresponding to the NFTs.
      */
     function batchChangePrice(uint256[] calldata listIndexes, Price[] calldata newPrices ) external;
+
+
+    //TODO
+    function batchListXENFT(InputOrder[] calldata inputOrders) external;
+
+    function batchDelistXENFT(uint256[] calldata listIndexes) external;
+
+    function batchBuyXENFT(uint256[] calldata listIndexes) external payable;
 }

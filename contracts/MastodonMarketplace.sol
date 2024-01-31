@@ -11,6 +11,8 @@ import {IERC721Receiver} from "@openzeppelin/contracts/interfaces/IERC721Receive
 import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {XENFTStorage} "./XENFTStorage.sol";
+
 /**
  * @title MastodonMarketplace
  * @dev A decentralized marketplace contract for trading ERC721 and ERC1155 NFTs.
@@ -400,4 +402,133 @@ contract MastodonMarketplace is
     function supportsInterface(
         bytes4 interfaceId
     ) public view override returns (bool) {}
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////For any type of NFTs that require storage in individual smart contracts.
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    mapping(uint256 tokenId => XENFTStorage addreeOfSC) public underlyingStorage;
+
+    function batchListXENFT(InputOrder[] calldata inputOrders) external nonReentrant {
+        uint256 arrayLength = inputOrders.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
+            _listXENFT(inputOrders[i]);
+        }
+    }
+
+    function batchDelistXENFT(uint256[] calldata listIndexes) external nonReentrant {
+        uint256 arrayLength = listIndexes.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
+            _delistXENFT(listIndexes[i]);
+        }
+    }
+
+    function batchBuyXENFT(uint256[] calldata listIndexes) external payable nonReentrant {
+        uint256 arrayLength = listIndexes.length;
+        for (uint256 i = 0; i < arrayLength; i++) {
+            _buyXENFT(listIndexes[i]);
+        }
+
+        if(address(this).balance > 0){
+            (bool success, ) = msg.sender.call{
+                value: address(this).balance
+            }("");
+            require(success, "Mastodon: remaining funds failed");
+        }
+    }
+
+    function _listXENFT(InputOrder calldata inputOrder) internal {
+        globalIndex++;
+
+        Order storage newOrder = orders[globalIndex];
+        newOrder.nftContract = inputOrder.nftContract;
+        newOrder.tokenId = inputOrder.tokenId;
+        newOrder.payoutToken = inputOrder.payoutToken;
+        newOrder.price = inputOrder.price;
+        newOrder.seller = msg.sender;
+        newOrder.assetClass = AssetClass.ERC721;
+
+        XENFTStorage minimalStorage = new XENFTStorage();
+        underlyingStorage[inputOrder.tokenId] = minimalStorage;
+
+        IERC721(order.nftContract).safeTransferFrom(msg.sender, address(minimalStorage), inputOrder.tokenId);
+
+        emit List(globalIndex, newOrder);
+    }
+
+    function _delistXENFT(uint256 listIndex) internal {
+        require(
+            orders[listIndex].seller == msg.sender,
+            "Mastodon: not the order owner"
+        );
+
+        Order memory order = orders[listIndex];
+
+        address nftStorage = underlyingStorage[order.tokenId];
+
+        XENFTStorage(nftStorage).transferBack(
+            orders[listIndex].nftContract,
+            msg.sender,
+            orders[listIndex].tokenId
+        );
+
+        emit Delist(listIndex, order);
+        delete (orders[listIndex]);
+    }
+
+    function _buyXENFT(uint256 listIndex) internal {
+        Order memory order = orders[listIndex];
+
+        uint256 price = order.price;
+
+        uint256 sellerProceeds = (price * 9600) / MAX_BPS;
+        uint256 developerFee = (price * DEV_FEE_BPS) /MAX_BPS;
+        uint256 burnAmount = (price * BURN_FEE_BPS) / MAX_BPS;
+
+        address buyer = msg.sender;
+
+        if (order.payoutToken == PayoutToken.NativeToken) {
+            require(address(this).balance >= price, "Mastodon: invalid price");
+
+            (bool success, ) = order.seller.call{
+                value: sellerProceeds
+            }("");
+            require(success, "Mastodon: 1.Payment failed.");
+
+            (success, ) = dev.call{value: developerFee}("");
+            require(success, "Mastodon: 2.Payment failed.");
+
+            (success, ) = dxnBuyBurn.call{value: burnAmount}("");
+            require(success, "Mastodon: 3.Payment failed.");
+        } else if (order.payoutToken == PayoutToken.Xen) {
+            xen.safeTransferFrom(buyer, order.seller, sellerProceeds);
+
+            xen.safeTransferFrom(buyer, dev, developerFee);
+
+            xen.safeTransferFrom(buyer, dxnBuyBurn, burnAmount);
+        } else {
+            dxn.safeTransferFrom(buyer, order.seller, sellerProceeds);
+
+            dxn.safeTransferFrom(buyer, dev, developerFee);
+
+            dxn.safeTransferFrom(
+                buyer,
+                0x000000000000000000000000000000000000dEaD,
+                burnAmount
+            );
+        }
+
+        address nftStorage = underlyingStorage[order.tokenId];
+
+        XENFTStorage(nftStorage).transferBack(
+            orders[listIndex].nftContract,
+            buyer,
+            orders[listIndex].tokenId
+        );
+
+        emit Buy(listIndex, orders[listIndex]);
+        delete (orders[listIndex]);
+    }
 }
