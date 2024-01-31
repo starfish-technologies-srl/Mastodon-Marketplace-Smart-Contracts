@@ -110,11 +110,4 @@ interface IMastodonMarketplace {
      */
     function batchChangePrice(uint256[] calldata listIndexes, Price[] calldata newPrices ) external;
 
-
-    //TODO
-    function batchListXENFT(InputOrder[] calldata inputOrders) external;
-
-    function batchDelistXENFT(uint256[] calldata listIndexes) external;
-
-    function batchBuyXENFT(uint256[] calldata listIndexes) external payable;
 }

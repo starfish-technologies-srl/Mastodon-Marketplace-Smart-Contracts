@@ -11,12 +11,14 @@ import {IERC721Receiver} from "@openzeppelin/contracts/interfaces/IERC721Receive
 import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {XENFTStorage} from "./XENFTStorage.sol";
+
 /**
  * @title MastodonMarketplace
  * @dev A decentralized marketplace contract for trading ERC721 and ERC1155 NFTs.
  * Users can list, delist, and buy NFTs using native tokens or specified ERC20 tokens.
  */
-contract MastodonMarketplace is
+contract MastodonMarketplaceXENFT is
     IMastodonMarketplace,
     IERC721Receiver,
     IERC1155Receiver,
@@ -74,6 +76,8 @@ contract MastodonMarketplace is
     // Mapping to store NFT orders
     mapping(uint256 listIndex => Order order) public orders;
 
+    mapping(uint256 tokenId => XENFTStorage addreeOfSC) public underlyingStorage;
+
     /**
      * @dev Constructor to initialize the MastodonMarketplace contract.
      * @param _xen The address of the $XEN token contract.
@@ -89,36 +93,24 @@ contract MastodonMarketplace is
         dev = msg.sender;
     }
 
-    /**
-     * @dev Batch lists multiple NFTs for sale on the marketplace.
-     * @param inputOrders An array of InputOrder structures representing the NFTs to be listed.
-     */
     function batchList(InputOrder[] calldata inputOrders) external nonReentrant {
         uint256 arrayLength = inputOrders.length;
         for (uint256 i = 0; i < arrayLength; i++) {
-            _list(inputOrders[i]);
+            _listXENFT(inputOrders[i]);
         }
     }
 
-    /**
-     * @dev Batch delists multiple NFTs from the marketplace.
-     * @param listIndexes An array of list indexes representing the NFTs to be delisted.
-     */
     function batchDelist(uint256[] calldata listIndexes) external nonReentrant {
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
-            _delist(listIndexes[i]);
+            _delistXENFT(listIndexes[i]);
         }
     }
 
-    /**
-     * @dev Batch buys multiple NFTs from the marketplace.
-     * @param listIndexes An array of list indexes representing the NFTs to be bought.
-     */
     function batchBuy(uint256[] calldata listIndexes) external payable nonReentrant {
         uint256 arrayLength = listIndexes.length;
         for (uint256 i = 0; i < arrayLength; i++) {
-            _buy(listIndexes[i]);
+            _buyXENFT(listIndexes[i]);
         }
 
         if(address(this).balance > 0){
@@ -175,11 +167,7 @@ contract MastodonMarketplace is
         isOwned = false;
     }
 
-    /**
-     * @dev Lists a single NFT for sale on the marketplace.
-     * @param inputOrder An InputOrder structure representing the NFT to be listed.
-     */
-    function _list(InputOrder calldata inputOrder) internal {
+    function _listXENFT(InputOrder calldata inputOrder) internal {
         globalIndex++;
 
         Order storage newOrder = orders[globalIndex];
@@ -188,65 +176,17 @@ contract MastodonMarketplace is
         newOrder.payoutToken = inputOrder.payoutToken;
         newOrder.price = inputOrder.price;
         newOrder.seller = msg.sender;
+        newOrder.assetClass = AssetClass.ERC721;
 
-        bool supportsERC721 = ERC165Checker.supportsInterface(
-            inputOrder.nftContract,
-            type(IERC721).interfaceId
-        );
-        bool supportsERC1155 = ERC165Checker.supportsInterface(
-            inputOrder.nftContract,
-            type(IERC1155).interfaceId
-        );
+        XENFTStorage minimalStorage = new XENFTStorage();
+        underlyingStorage[inputOrder.tokenId] = minimalStorage;
 
-        if (supportsERC721 && !supportsERC1155) {
-            newOrder.assetClass = AssetClass.ERC721;
-            IERC721(inputOrder.nftContract).safeTransferFrom(
-                msg.sender,
-                address(this),
-                inputOrder.tokenId
-            );
-        } else if (!supportsERC721 && supportsERC1155) {
-            require(inputOrder.supply > 0, "Mastodon: erc1155 supply > 0");
-            newOrder.supply = inputOrder.supply;
-            newOrder.assetClass = AssetClass.ERC1155;
-            IERC1155(inputOrder.nftContract).safeTransferFrom(
-                msg.sender,
-                address(this),
-                inputOrder.tokenId,
-                inputOrder.supply,
-                "0x0"
-            );
-        } else if (supportsERC721 && supportsERC1155) {
-            if (inputOrder.supply == 0) {
-                newOrder.assetClass = AssetClass.BothClass_ERC721;
-                IERC721(inputOrder.nftContract).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    inputOrder.tokenId
-                );
-            } else {
-                newOrder.assetClass = AssetClass.BothClass_ERC1155;
-                newOrder.supply = inputOrder.supply;
-                IERC1155(inputOrder.nftContract).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    inputOrder.tokenId,
-                    inputOrder.supply,
-                    "0x0"
-                );
-            }
-        } else {
-            revert("Mastodon: not supported");
-        }
+        IERC721(inputOrder.nftContract).safeTransferFrom(msg.sender, address(minimalStorage), inputOrder.tokenId);
 
         emit List(globalIndex, newOrder);
     }
 
-    /**
-     * @dev Delists a single NFT from the marketplace.
-     * @param listIndex The index of the NFT to be delisted.
-     */
-    function _delist(uint256 listIndex) internal {
+    function _delistXENFT(uint256 listIndex) internal {
         require(
             orders[listIndex].seller == msg.sender,
             "Mastodon: not the order owner"
@@ -254,38 +194,19 @@ contract MastodonMarketplace is
 
         Order memory order = orders[listIndex];
 
-        if (
-            order.assetClass == AssetClass.ERC721 ||
-            order.assetClass == AssetClass.BothClass_ERC721
-        ) {
-            IERC721(orders[listIndex].nftContract).safeTransferFrom(
-                address(this),
-                msg.sender,
-                orders[listIndex].tokenId
-            );
-        } else if (
-            order.assetClass == AssetClass.ERC1155 ||
-            order.assetClass == AssetClass.BothClass_ERC1155
+        XENFTStorage nftStorage = underlyingStorage[order.tokenId];
 
-        ) {
-            IERC1155(orders[listIndex].nftContract).safeTransferFrom(
-                address(this),
-                msg.sender,
-                order.tokenId,
-                order.supply,
-                "0x0"
-            );
-        } else revert("Mastodon: not supported");
+        nftStorage.transferBack(
+            orders[listIndex].nftContract,
+            msg.sender,
+            orders[listIndex].tokenId
+        );
 
         emit Delist(listIndex, order);
         delete (orders[listIndex]);
     }
 
-    /**
-     * @dev Buys a single NFT from the marketplace.
-     * @param listIndex The index of the NFT to be bought.
-     */
-    function _buy(uint256 listIndex) internal {
+    function _buyXENFT(uint256 listIndex) internal {
         Order memory order = orders[listIndex];
 
         uint256 price = order.price;
@@ -293,6 +214,8 @@ contract MastodonMarketplace is
         uint256 sellerProceeds = (price * 9600) / MAX_BPS;
         uint256 developerFee = (price * DEV_FEE_BPS) /MAX_BPS;
         uint256 burnAmount = (price * BURN_FEE_BPS) / MAX_BPS;
+
+        address buyer = msg.sender;
 
         if (order.payoutToken == PayoutToken.NativeToken) {
             require(address(this).balance >= price, "Mastodon: invalid price");
@@ -308,39 +231,30 @@ contract MastodonMarketplace is
             (success, ) = dxnBuyBurn.call{value: burnAmount}("");
             require(success, "Mastodon: 3.Payment failed.");
         } else if (order.payoutToken == PayoutToken.Xen) {
-            xen.safeTransferFrom(msg.sender, order.seller, sellerProceeds);
+            xen.safeTransferFrom(buyer, order.seller, sellerProceeds);
 
-            xen.safeTransferFrom(msg.sender, dev, developerFee);
+            xen.safeTransferFrom(buyer, dev, developerFee);
 
-            xen.safeTransferFrom(msg.sender, dxnBuyBurn, burnAmount);
+            xen.safeTransferFrom(buyer, dxnBuyBurn, burnAmount);
         } else {
-            dxn.safeTransferFrom(msg.sender, order.seller, sellerProceeds);
+            dxn.safeTransferFrom(buyer, order.seller, sellerProceeds);
 
-            dxn.safeTransferFrom(msg.sender, dev, developerFee);
+            dxn.safeTransferFrom(buyer, dev, developerFee);
 
             dxn.safeTransferFrom(
-                msg.sender,
+                buyer,
                 0x000000000000000000000000000000000000dEaD,
                 burnAmount
             );
         }
 
-        if (order.assetClass == AssetClass.ERC721 ||
-            order.assetClass == AssetClass.BothClass_ERC721) {
-            IERC721(order.nftContract).safeTransferFrom(
-                address(this),
-                msg.sender,
-                order.tokenId
-            );
-        } else {
-            IERC1155(order.nftContract).safeTransferFrom(
-                address(this),
-                msg.sender,
-                order.tokenId,
-                order.supply,
-                "0x0"
-            );
-        }
+        XENFTStorage nftStorage = underlyingStorage[order.tokenId];
+
+        nftStorage.transferBack(
+            orders[listIndex].nftContract,
+            buyer,
+            orders[listIndex].tokenId
+        );
 
         emit Buy(listIndex, orders[listIndex]);
         delete (orders[listIndex]);
