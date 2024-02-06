@@ -1,11 +1,15 @@
 {
+  "scripts": {
+    "postinstall": "cp -f contract_replacements/XENFT.sol node_modules/@faircrypto/XENFT/contracts/XENFT.sol"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "hardhat": "^2.18.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0",
+    "@faircrypto/XENFT": "github:FairCrypto/XENFT",
+    "@openzeppelin/contracts": "^4.9.5",
     "ethers": "^6.8.0"
   }
 }

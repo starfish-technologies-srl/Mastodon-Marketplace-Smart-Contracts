@@ -150,6 +150,6 @@ contract Delist is Test {
 
 contract ErrorsTest {
     function arithmeticError(uint256 a) public {
-        uint256 a = a - 100;
+        a = a - 100;
     }
 }

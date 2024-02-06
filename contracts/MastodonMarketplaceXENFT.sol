@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IMastodonMarketplace} from "./IMastodonMarketplace.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
@@ -85,6 +85,7 @@ contract MastodonMarketplaceXENFT is
      * @param _dxnBuyBurn The address of smart contract for burning DXN tokens.
      */
     constructor(IERC20 _xen, IERC20 _dxn, address _dxnBuyBurn) {
+        //TODO Makes less sense adding a require line in the constructor of non ERC contracts.
         require(_dxnBuyBurn != address(0), "Mastodon: zero address is not allowed");
 
         xen = _xen;
@@ -280,31 +281,31 @@ contract MastodonMarketplaceXENFT is
     // ERC721 and ERC1155 receiver functions... //
 
     function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4) {
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure returns (bytes4) {
         return (this.onERC721Received.selector);
     }
 
     function onERC1155Received(
-        address operator,
-        address from,
-        uint256 id,
-        uint256 value,
-        bytes calldata data
-    ) external returns (bytes4) {
+        address,
+        address,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external pure returns (bytes4) {
         return (this.onERC1155Received.selector);
     }
 
     function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
-    ) external returns (bytes4) {
+        address,
+        address,
+        uint256[] calldata,
+        uint256[] calldata,
+        bytes calldata
+    ) external pure returns (bytes4) {
         return (this.onERC1155BatchReceived.selector);
     }
 
@@ -312,7 +313,7 @@ contract MastodonMarketplaceXENFT is
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(
-        bytes4 interfaceId
-    ) public view override returns (bool) {}
+        bytes4
+    ) public pure override returns (bool) {}
 
 }

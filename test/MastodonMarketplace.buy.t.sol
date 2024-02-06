@@ -80,7 +80,7 @@ contract List is Test {
 
         (
             address nftContract,
-            address seller,
+            ,
             uint256 tokenId,
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
@@ -134,7 +134,7 @@ contract List is Test {
 
         (
             address nftContract,
-            address seller,
+            ,
             uint256 tokenId,
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
@@ -163,6 +163,6 @@ contract List is Test {
 
 contract ErrorsTest {
     function arithmeticError(uint256 a) public {
-        uint256 a = a - 100;
+        a = a - 100;
     }
 }
