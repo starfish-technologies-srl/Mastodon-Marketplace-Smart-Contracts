@@ -12,8 +12,6 @@ import {ERC1155Mock} from "../contracts/ERC1155Mock.sol";
 
 import {IMastodonMarketplace} from "../contracts/IMastodonMarketplace.sol";
 
-//0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84 the general deployer
-
 contract List is Test {
     MastodonMarketplace mastodonMarketplace;
     ERC20Mock erc20MockA;
@@ -53,7 +51,6 @@ contract List is Test {
                 .PayoutToken
                 .NativeToken;
         uint256 input_price = 1 ether;
-        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
         uint8 BURN_FEE_BPS = 250;
@@ -107,7 +104,6 @@ contract List is Test {
                 .PayoutToken
                 .NativeToken;
         uint256 input_price = 1 ether;
-        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
         uint8 BURN_FEE_BPS = 250;

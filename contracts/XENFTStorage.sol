@@ -15,7 +15,7 @@ contract XENFTStorage is IERC721Receiver {
         address destination,
         uint256 tokenId
     ) external {
-        require(msg.sender == factory, "Caller is not factory");
+        require(msg.sender == factory, "XENFTStorage: Caller is not factory");
 
         IERC721(xenft).safeTransferFrom(address(this), destination, tokenId);
     }
