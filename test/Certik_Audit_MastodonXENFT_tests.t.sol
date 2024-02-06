@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
-import "../contracts/MastodonMarketplace.sol";
+import "../contracts/MastodonMarketplaceXENFT.sol";
 import "../contracts/ERC20Mock.sol";
 import "../contracts/ERC721Mock.sol";
 
-contract Certik_tests_Mastodon is Test {
-    MastodonMarketplace public market;
+contract BuyTestXENFT is Test {
+    MastodonMarketplaceXENFT public market;
     ERC20Mock public xen;
     ERC20Mock public dxn;
     ERC721Mock public erc721;
@@ -20,7 +20,7 @@ contract Certik_tests_Mastodon is Test {
         dxn = new ERC20Mock();
         erc721 = new ERC721Mock();
         vm.startPrank(owner);
-        market = new MastodonMarketplace(xen, dxn, burn);
+        market = new MastodonMarketplaceXENFT(xen, dxn, burn);
         vm.stopPrank();
     }
 
