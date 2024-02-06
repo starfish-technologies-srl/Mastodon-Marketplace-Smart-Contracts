@@ -5,7 +5,7 @@ import "../contracts/MastodonMarketplaceXENFT.sol";
 import "../contracts/ERC20Mock.sol";
 import "../contracts/ERC721Mock.sol";
 
-contract BuyTestXENFT is Test {
+contract Certik_tests_MastodonXENFT is Test {
     MastodonMarketplaceXENFT public market;
     ERC20Mock public xen;
     ERC20Mock public dxn;
