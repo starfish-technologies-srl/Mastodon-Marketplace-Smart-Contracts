@@ -13,7 +13,7 @@ import {IMastodonMarketplace} from "../contracts/IMastodonMarketplace.sol";
 
 //0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84 the general deployer
 
-contract List is Test {
+contract ListXENFT is Test {
     MastodonMarketplaceXENFT mastodonMarketplaceXENFT;
     ERC20Mock erc20MockA;
     ERC20Mock erc20MockB;
@@ -36,7 +36,7 @@ contract List is Test {
         );
     }
 
-    function test_ListMockERC721() public {
+    function test_ListMockERC721XENFT() public {
         address input_nftContract = address(erc721Mock);
         address input_seller = add1;
         uint256 input_tokenId = 1;
@@ -81,17 +81,4 @@ contract List is Test {
         assertEq(uint8(assetClass), uint8(expected_assetClass));
     }
 
-    function test_ListXENFT() public {}
-
-    function test_ListDBXENFT() public {}
-
-    // function testFail_Subtract43() public { //testFail: The inverse of the test prefix - if the function does not revert, the test fails.
-    //     testNumber -= 43;
-    // }
-}
-
-contract ErrorsTest {
-    function arithmeticError(uint256 a) public {
-        uint256 a = a - 100;
-    }
 }

@@ -91,6 +91,7 @@ contract List is Test {
         uint256 input_supply = 10;
         IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
         uint256 input_price = 1;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC1155;
 
         IMastodonMarketplace.InputOrder[]
             memory inputOrders = new IMastodonMarketplace.InputOrder[](1);
@@ -115,6 +116,7 @@ contract List is Test {
             uint256 supply,
             IMastodonMarketplace.PayoutToken payoutToken,
             uint256 price,
+            IMastodonMarketplace.AssetClass assetClass
         ) = mastodonMarketplace.orders(1);
 
         assertEq(nftContract, address(erc1155Mock));
@@ -123,19 +125,7 @@ contract List is Test {
         assertEq(supply, input_supply);
         assertEq(uint8(payoutToken), uint8(input_payoutToken));
         assertEq(price, input_price);
+        assertEq(uint8(assetClass), uint8(expected_assetClass));
     }
 
-    function test_ListXENFT() public {}
-
-    function test_ListDBXENFT() public {}
-
-    // function testFail_Subtract43() public { //testFail: The inverse of the test prefix - if the function does not revert, the test fails.
-    //     testNumber -= 43;
-    // }
-}
-
-contract ErrorsTest {
-    function arithmeticError(uint256 a) public {
-        uint256 a = a - 100;
-    }
 }

@@ -14,7 +14,7 @@ import {IMastodonMarketplace} from "../contracts/IMastodonMarketplace.sol";
 
 //0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84 the general deployer
 
-contract List is Test {
+contract ListXENFT is Test {
     MastodonMarketplaceXENFT mastodonMarketplaceXENFT;
     ERC20Mock erc20MockA;
     ERC20Mock erc20MockB;
@@ -44,7 +44,7 @@ contract List is Test {
         deal(buyer, 1 ether);
     }
 
-    function test_BuyMockERC721() public {
+    function test_BuyMockERC721XENFT() public {
         address input_nftContract = address(erc721Mock);
         address input_seller = seller;
         uint256 input_tokenId = 1;

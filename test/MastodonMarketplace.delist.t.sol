@@ -12,8 +12,6 @@ import {ERC1155Mock} from "../contracts/ERC1155Mock.sol";
 
 import {IMastodonMarketplace} from "../contracts/IMastodonMarketplace.sol";
 
-//0xb4c79daB8f259C7Aee6E5b2Aa729821864227e84 the general deployer
-
 contract Delist is Test {
     MastodonMarketplace mastodonMarketplace;
     ERC20Mock erc20MockA;
@@ -137,19 +135,5 @@ contract Delist is Test {
         
         vm.prank(add1);
         mastodonMarketplace.batchDelist(delistIndexes);
-    }
-
-    function test_deListXENFT() public {}
-
-    function test_deListDBXENFT() public {}
-
-    // function testFail_Subtract43() public { //testFail: The inverse of the test prefix - if the function does not revert, the test fails.
-    //     testNumber -= 43;
-    // }
-}
-
-contract ErrorsTest {
-    function arithmeticError(uint256 a) public {
-        uint256 a = a - 100;
     }
 }
