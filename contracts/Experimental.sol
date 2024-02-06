@@ -6,6 +6,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {IMastodonMarketplace} from "./IMastodonMarketplace.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
+import {IERC1155} from "@openzeppelin/contracts/interfaces/IERC1155.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {XENFTStorage} from "./XENFTStorage.sol";
@@ -15,8 +18,10 @@ import {XENFTStorage} from "./XENFTStorage.sol";
  * @dev A decentralized marketplace contract for trading ERC721 and ERC1155 NFTs.
  * Users can list, delist, and buy NFTs using native tokens or specified ERC20 tokens.
  */
-contract MastodonMarketplaceXENFT is
+contract Experimental is
     IMastodonMarketplace,
+    IERC721Receiver,
+    IERC1155Receiver,
     ReentrancyGuard
 {
     using SafeERC20 for IERC20;
@@ -90,8 +95,12 @@ contract MastodonMarketplaceXENFT is
 
     function batchList(InputOrder[] calldata inputOrders) external nonReentrant {
         uint256 arrayLength = inputOrders.length;
+
+        require(arrayLength < 20, "max 20 NFTs"); //TODO test for arbitrary value for max number
+        XENFTStorage minimalStorage = new XENFTStorage();
+
         for (uint256 i = 0; i < arrayLength; i++) {
-            _listXENFT(inputOrders[i]);
+            _listXENFT(inputOrders[i], minimalStorage);
         }
     }
 
@@ -162,7 +171,7 @@ contract MastodonMarketplaceXENFT is
         isOwned = false;
     }
 
-    function _listXENFT(InputOrder calldata inputOrder) internal {
+    function _listXENFT(InputOrder calldata inputOrder, XENFTStorage minimalStorage) internal {
         globalIndex++;
 
         Order storage newOrder = orders[globalIndex];
@@ -173,7 +182,6 @@ contract MastodonMarketplaceXENFT is
         newOrder.seller = msg.sender;
         newOrder.assetClass = AssetClass.ERC721;
 
-        XENFTStorage minimalStorage = new XENFTStorage();
         underlyingStorage[inputOrder.tokenId] = minimalStorage;
 
         IERC721(inputOrder.nftContract).safeTransferFrom(msg.sender, address(minimalStorage), inputOrder.tokenId);
@@ -271,5 +279,43 @@ contract MastodonMarketplaceXENFT is
 
         emit NewPrice(listIndex, newPrice);
     }
+
+    // ERC721 and ERC1155 receiver functions... //
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return (this.onERC721Received.selector);
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return (this.onERC1155Received.selector);
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return (this.onERC1155BatchReceived.selector);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {}
 
 }
