@@ -161,4 +161,110 @@ contract XENFTList is Test {
             assertEq(uint8(assetClass), uint8(expected_assetClass));
         }
     }
+
+    function test_list20XENFTs() public {
+        user = msg.sender;
+        vm.deal(user, 1 ether);
+
+        address input_nftContract = address(xenft);
+        address input_seller = user;
+        uint256 input_supply = 0; //always 0 for ERC721
+        IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
+        uint256 input_price = 1;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
+        IMastodonMarketplace.InputOrder[]
+            memory inputOrders = new IMastodonMarketplace.InputOrder[](20);
+             
+        for(uint256 tokenId = 10001; tokenId < 10021; tokenId++){
+                inputOrders[tokenId - 10001] = IMastodonMarketplace.InputOrder(
+                input_nftContract,
+                tokenId,
+                input_supply,
+                input_payoutToken,
+                input_price
+            );
+        }
+
+        vm.startPrank(user);
+        for(uint256 i = 0; i < 20; i++) {
+            xenft.bulkClaimRank(1, 8);
+        }
+        xenft.setApprovalForAll(address(mastodonMarketplace), true);
+        mastodonMarketplace.batchList(inputOrders);
+        vm.stopPrank();
+
+        for(uint256 i = 0; i < 20; i++) {
+                //Verify
+            (
+                address nftContract,
+                address seller,
+                uint256 tokenId,
+                uint256 supply,
+                IMastodonMarketplace.PayoutToken payoutToken,
+                uint256 price,
+                IMastodonMarketplace.AssetClass assetClass
+            ) = mastodonMarketplace.orders(i + 1);
+
+            assertEq(nftContract, address(xenft));
+            assertEq(seller, input_seller);
+            assertEq(tokenId, 10001 + i);
+            assertEq(supply, input_supply);
+            assertEq(uint8(payoutToken), uint8(input_payoutToken));
+            assertEq(price, input_price);
+            assertEq(uint8(assetClass), uint8(expected_assetClass));
+        }
+    }
+
+     function test_list100XENFTs() public {
+        user = msg.sender;
+        vm.deal(user, 1 ether);
+
+        address input_nftContract = address(xenft);
+        address input_seller = user;
+        uint256 input_supply = 0; //always 0 for ERC721
+        IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
+        uint256 input_price = 1;
+        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
+        IMastodonMarketplace.InputOrder[]
+            memory inputOrders = new IMastodonMarketplace.InputOrder[](100);
+             
+        for(uint256 tokenId = 10001; tokenId < 10101; tokenId++){
+                inputOrders[tokenId - 10001] = IMastodonMarketplace.InputOrder(
+                input_nftContract,
+                tokenId,
+                input_supply,
+                input_payoutToken,
+                input_price
+            );
+        }
+
+        vm.startPrank(user);
+        for(uint256 i = 0; i < 100; i++) {
+            xenft.bulkClaimRank(1, 8);
+        }
+        xenft.setApprovalForAll(address(mastodonMarketplace), true);
+        mastodonMarketplace.batchList(inputOrders);
+        vm.stopPrank();
+
+        for(uint256 i = 0; i < 100; i++) {
+                //Verify
+            (
+                address nftContract,
+                address seller,
+                uint256 tokenId,
+                uint256 supply,
+                IMastodonMarketplace.PayoutToken payoutToken,
+                uint256 price,
+                IMastodonMarketplace.AssetClass assetClass
+            ) = mastodonMarketplace.orders(i + 1);
+
+            assertEq(nftContract, address(xenft));
+            assertEq(seller, input_seller);
+            assertEq(tokenId, 10001 + i);
+            assertEq(supply, input_supply);
+            assertEq(uint8(payoutToken), uint8(input_payoutToken));
+            assertEq(price, input_price);
+            assertEq(uint8(assetClass), uint8(expected_assetClass));
+        }
+    }
 }
