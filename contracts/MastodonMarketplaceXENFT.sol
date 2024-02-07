@@ -90,9 +90,11 @@ contract MastodonMarketplaceXENFT is
     }
 
     function batchList(InputOrder[] calldata inputOrders) external nonReentrant {
+        XENFTStorage minimalStorage = new XENFTStorage();
         uint256 arrayLength = inputOrders.length;
+
         for (uint256 i = 0; i < arrayLength; i++) {
-            _listXENFT(inputOrders[i]);
+            _listXENFT(inputOrders[i], minimalStorage);
         }
     }
 
@@ -163,7 +165,7 @@ contract MastodonMarketplaceXENFT is
         isOwned = false;
     }
 
-    function _listXENFT(InputOrder calldata inputOrder) internal {
+    function _listXENFT(InputOrder calldata inputOrder, XENFTStorage minimalStorage) internal {
         globalIndex++;
 
         Order storage newOrder = orders[globalIndex];
@@ -174,7 +176,6 @@ contract MastodonMarketplaceXENFT is
         newOrder.seller = msg.sender;
         newOrder.assetClass = AssetClass.ERC721;
 
-        XENFTStorage minimalStorage = new XENFTStorage();
         underlyingStorage[inputOrder.tokenId] = minimalStorage;
 
         IERC721(inputOrder.nftContract).safeTransferFrom(msg.sender, address(minimalStorage), inputOrder.tokenId);
