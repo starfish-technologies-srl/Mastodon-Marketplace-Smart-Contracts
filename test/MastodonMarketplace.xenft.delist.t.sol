@@ -12,7 +12,7 @@ import {ERC721Mock} from "../contracts/ERC721Mock.sol";
 import {XENCrypto} from "@faircrypto/xen-crypto/contracts/XENCrypto.sol";
 import {XENTorrent} from "@faircrypto/XENFT/contracts/XENFT.sol";
 
-contract XENFTList is Test {
+contract XENFTDelist is Test {
     MastodonMarketplaceXENFT mastodonMarketplace;
     ERC20Mock erc20MockB;
     XENCrypto xenCrypto;
@@ -61,7 +61,7 @@ contract XENFTList is Test {
         );
     }
 
-    function test_ListOneXENFT() public {
+    function test_delistOneXENFT() public {
         user = msg.sender;
         vm.deal(user, 1 ether);
 
@@ -90,76 +90,23 @@ contract XENFTList is Test {
         mastodonMarketplace.batchList(inputOrders);
         vm.stopPrank();
 
-        //Verify
+        uint256[] memory delistIndexes = new uint256[](1);
+        delistIndexes[0] = 1;
+
+        vm.prank(user);
+        mastodonMarketplace.batchDelist(delistIndexes);
+
+        assertEq(xenft.ownerOf(10001), user);
         (
-            address nftContract,
+            ,
             address seller,
-            uint256 tokenId,
-            uint256 supply,
-            IMastodonMarketplace.PayoutToken payoutToken,
-            uint256 price,
-            IMastodonMarketplace.AssetClass assetClass
+            ,
+            ,
+            ,
+            ,
+            
         ) = mastodonMarketplace.orders(1);
 
-        assertEq(nftContract, address(xenft));
-        assertEq(seller, input_seller);
-        assertEq(tokenId, input_tokenId);
-        assertEq(supply, input_supply);
-        assertEq(uint8(payoutToken), uint8(input_payoutToken));
-        assertEq(price, input_price);
-        assertEq(uint8(assetClass), uint8(expected_assetClass));
-    }
-
-    function test_listTenXENFTs() public {
-        user = msg.sender;
-        vm.deal(user, 1 ether);
-
-        address input_nftContract = address(xenft);
-        address input_seller = user;
-        uint256 input_supply = 0; //always 0 for ERC721
-        IMastodonMarketplace.PayoutToken input_payoutToken = IMastodonMarketplace.PayoutToken.NativeToken;
-        uint256 input_price = 1;
-        IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
-        IMastodonMarketplace.InputOrder[]
-            memory inputOrders = new IMastodonMarketplace.InputOrder[](10);
-             
-        for(uint256 tokenId = 10001; tokenId < 10011; tokenId++){
-                inputOrders[tokenId - 10001] = IMastodonMarketplace.InputOrder(
-                input_nftContract,
-                tokenId,
-                input_supply,
-                input_payoutToken,
-                input_price
-            );
-        }
-
-        vm.startPrank(user);
-        for(uint256 i = 0; i < 10; i++) {
-            xenft.bulkClaimRank(1, 8);
-        }
-        xenft.setApprovalForAll(address(mastodonMarketplace), true);
-        mastodonMarketplace.batchList(inputOrders);
-        vm.stopPrank();
-
-        for(uint256 i = 0; i < 10; i++) {
-                //Verify
-            (
-                address nftContract,
-                address seller,
-                uint256 tokenId,
-                uint256 supply,
-                IMastodonMarketplace.PayoutToken payoutToken,
-                uint256 price,
-                IMastodonMarketplace.AssetClass assetClass
-            ) = mastodonMarketplace.orders(i + 1);
-
-            assertEq(nftContract, address(xenft));
-            assertEq(seller, input_seller);
-            assertEq(tokenId, 10001 + i);
-            assertEq(supply, input_supply);
-            assertEq(uint8(payoutToken), uint8(input_payoutToken));
-            assertEq(price, input_price);
-            assertEq(uint8(assetClass), uint8(expected_assetClass));
-        }
+        assertEq(seller, address(0));
     }
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IMastodonMarketplace} from "./IMastodonMarketplace.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
