@@ -56,9 +56,9 @@ contract ListXENFT is Test {
         IMastodonMarketplace.AssetClass expected_assetClass = IMastodonMarketplace.AssetClass.ERC721;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
-        uint8 BURN_FEE_BPS = 250;
+        uint16 BURN_FEE_BPS = 350;
         uint16 MAX_BPS = 10000;
-        uint256 expected_seller = (input_price * 9600) / MAX_BPS;
+        uint256 expected_seller = (input_price * 9500) / MAX_BPS;
         uint256 expected_dev = (input_price * DEV_FEE_BPS) / MAX_BPS;
         uint256 expected_burn = (input_price * BURN_FEE_BPS) / MAX_BPS;
 

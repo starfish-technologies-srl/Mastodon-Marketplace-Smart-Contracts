@@ -30,9 +30,9 @@ contract MastodonMarketplace is
     uint256 public globalIndex;
 
     // Constants for fee calculations
-    uint8 private constant DEV_FEE_BPS = 150;
-    uint8 private constant BURN_FEE_BPS = 250;
     uint16 private constant MAX_BPS = 10000;
+    uint16 private constant BURN_FEE_BPS = 350;
+    uint8 private constant DEV_FEE_BPS = 150;
 
     //The ERC20 token contract address for the $XEN token.
     IERC20 public immutable xen;
@@ -290,7 +290,7 @@ contract MastodonMarketplace is
 
         uint256 price = order.price;
 
-        uint256 sellerProceeds = (price * 9600) / MAX_BPS;
+        uint256 sellerProceeds = (price * 9500) / MAX_BPS;
         uint256 developerFee = (price * DEV_FEE_BPS) /MAX_BPS;
         uint256 burnAmount = (price * BURN_FEE_BPS) / MAX_BPS;
 

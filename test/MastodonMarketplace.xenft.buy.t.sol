@@ -100,7 +100,7 @@ contract XENFTBuy is Test {
         mastodonMarketplace.batchBuy{value: input_price}(buyIndexes);
     }
 
-    function test_buyTenXENFTs() public {
+    function test_buyTenXENFTs() public {   
         user = msg.sender;
         vm.deal(user, 1 ether);
         vm.deal(buyer, 10 ether);
@@ -143,7 +143,7 @@ contract XENFTBuy is Test {
         vm.prank(buyer);
         mastodonMarketplace.batchBuy{value: 10 ether}(buyIndexes);
     
-        assertEq(user.balance, sellerBalanceBefore + 10 ether * 9600 / 10000);
+        assertEq(user.balance, sellerBalanceBefore + 10 ether * 9500 / 10000);
         assertEq(buyer.balance, buyerBalanceBefore - 10 ether);
         for(uint256 i = 1; i < 11; i++) {
             assertEq(xenft.ownerOf(10000 + i), buyer);

@@ -11,8 +11,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {XENFTStorage} from "./XENFTStorage.sol";
 
 /**
- * @title MastodonMarketplace
- * @dev A decentralized marketplace contract for trading ERC721 and ERC1155 NFTs.
+ * @title MastodonMarketplace XENFT
+ * @dev A decentralized marketplace contract for trading ERC721
+ * !!! that creates a new storage smart contract each time a list action is executed to storage the NFTs. (Limitation from XENFT sc)
  * Users can list, delist, and buy NFTs using native tokens or specified ERC20 tokens.
  */
 contract MastodonMarketplaceXENFT is
@@ -27,9 +28,9 @@ contract MastodonMarketplaceXENFT is
     uint256 public globalIndex;
 
     // Constants for fee calculations
-    uint8 private constant DEV_FEE_BPS = 150;
-    uint8 private constant BURN_FEE_BPS = 250;
     uint16 private constant MAX_BPS = 10000;
+    uint16 private constant BURN_FEE_BPS = 350;
+    uint8 private constant DEV_FEE_BPS = 150;
 
     //The ERC20 token contract address for the $XEN token.
     IERC20 public immutable xen;
@@ -90,6 +91,7 @@ contract MastodonMarketplaceXENFT is
 
     function batchList(InputOrder[] calldata inputOrders) external nonReentrant {
         require(inputOrders.length <= 100, "Mastodon: max 100 NFTs");
+
         XENFTStorage minimalStorage = new XENFTStorage();
         uint256 arrayLength = inputOrders.length;
 
@@ -184,19 +186,19 @@ contract MastodonMarketplaceXENFT is
     }
 
     function _delistXENFT(uint256 listIndex) internal {
+        Order memory order = orders[listIndex];
+
         require(
-            orders[listIndex].seller == msg.sender,
+            order.seller == msg.sender,
             "Mastodon: not the order owner"
         );
-
-        Order memory order = orders[listIndex];
 
         XENFTStorage nftStorage = underlyingStorage[order.tokenId];
 
         nftStorage.transferBack(
-            orders[listIndex].nftContract,
+            order.nftContract,
             msg.sender,
-            orders[listIndex].tokenId
+            order.tokenId
         );
 
         emit Delist(listIndex, order);
@@ -208,7 +210,7 @@ contract MastodonMarketplaceXENFT is
 
         uint256 price = order.price;
 
-        uint256 sellerProceeds = (price * 9600) / MAX_BPS;
+        uint256 sellerProceeds = (price * 9500) / MAX_BPS;
         uint256 developerFee = (price * DEV_FEE_BPS) /MAX_BPS;
         uint256 burnAmount = (price * BURN_FEE_BPS) / MAX_BPS;
 

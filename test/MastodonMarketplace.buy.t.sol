@@ -53,9 +53,9 @@ contract List is Test {
         uint256 input_price = 1 ether;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
-        uint8 BURN_FEE_BPS = 250;
+        uint16 BURN_FEE_BPS = 350;
         uint16 MAX_BPS = 10000;
-        uint256 expected_seller = (input_price * 9600) / MAX_BPS;
+        uint256 expected_seller = (input_price * 9500) / MAX_BPS;
         uint256 expected_dev = (input_price * DEV_FEE_BPS) / MAX_BPS;
         uint256 expected_burn = (input_price * BURN_FEE_BPS) / MAX_BPS;
 
@@ -106,9 +106,9 @@ contract List is Test {
         uint256 input_price = 1 ether;
 
         uint8 DEV_FEE_BPS = 150; //BPS, 1.5%, 10% = 1000
-        uint8 BURN_FEE_BPS = 250;
+        uint16 BURN_FEE_BPS = 350;
         uint16 MAX_BPS = 10000;
-        uint256 expected_seller = (input_price * 9600) / MAX_BPS;
+        uint256 expected_seller = (input_price * 9500) / MAX_BPS;
         uint256 expected_dev = (input_price * DEV_FEE_BPS) / MAX_BPS;
         uint256 expected_burn = (input_price * BURN_FEE_BPS) / MAX_BPS;
 
@@ -146,19 +146,5 @@ contract List is Test {
         assertEq(seller.balance, expected_seller);
         assertEq(address(burnerMock).balance, expected_burn);
         assertEq(dev.balance, expected_dev);
-    }
-
-    function test_BuyXENFT() public {}
-
-    function test_BuyDBXENFT() public {}
-
-    // function testFail_Subtract43() public { //testFail: The inverse of the test prefix - if the function does not revert, the test fails.
-    //     testNumber -= 43;
-    // }
-}
-
-contract ErrorsTest {
-    function arithmeticError(uint256 a) public {
-        a = a - 100;
     }
 }
