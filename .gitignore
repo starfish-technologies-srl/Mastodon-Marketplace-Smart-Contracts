@@ -113,3 +113,5 @@ build/
 interface/build/
 
 .secrets.json
+
+typechain-types/
